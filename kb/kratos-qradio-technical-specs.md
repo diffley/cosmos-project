@@ -13,9 +13,15 @@
 
 ### Standard Interfaces
 - **TCP/IP**: Standard networking protocol
-- **GEMS**: Ground Equipment Management System
-- **REST**: RESTful HTTP API
+- **GEMS**: Ground Equipment Management System (open standard API)
+- **REST**: RESTful HTTP API (open standard API)
 - **VITA-49**: Digital radio transport standard
+
+### Control and Monitoring Options
+- **Browser-based UI**: Web interface for monitoring and control
+- **REST API**: Open standards API for programmatic control
+- **GEMS API**: Open standards API for ground equipment management
+- **Open Standards Approach**: quantumRadio embraces open standards for integration
 
 ### VITA-49 Protocol Details
 - **Purpose**: Message interoperability between multi-vendor equipment
