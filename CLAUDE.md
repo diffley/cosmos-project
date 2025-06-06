@@ -1,9 +1,24 @@
 # CLAUDE.md - COSMOS/OpenC3 Development Guidelines
 
 ## Project Overview
-This is a COSMOS (OpenC3) cloud-native command and control system project. COSMOS uses a containerized microservices architecture with Ruby as the primary language and Python support for scripting and interfaces.
+This is a COSMOS (OpenC3) cloud-native command and control system project running in **Core Single Server Architecture** with **Local Mode** enabled. COSMOS uses a containerized microservices architecture with Ruby as the primary language and Python support for scripting and interfaces.
 
-## Architecture & Tech Stack
+## Architecture & Deployment Model
+
+### Core Single Server Architecture
+- **Deployment**: Single server using Docker Desktop/Docker
+- **License**: AGPLv3 (free, open source)
+- **Best For**: Evaluation, development, university teams, localized lab work
+- **Limitations**: Single user, shared admin password, no enterprise features
+- **Advantages**: Free, easy to deploy and configure
+
+### Local Mode Configuration
+- **Local Mode**: Enabled via `OPENC3_LOCAL_MODE=1` in `.env`
+- **Development Workflow**: Edit files locally with automatic sync to COSMOS
+- **File Location**: `plugins/targets_modified/` for modified components
+- **Instant Updates**: No plugin rebuild required for script/screen changes
+
+## Tech Stack
 - **Primary Language**: Ruby (Rails framework)
 - **Secondary Language**: Python (for scripting and interfaces)
 - **Containerization**: Docker & Docker Compose
@@ -22,9 +37,10 @@ This is a COSMOS (OpenC3) cloud-native command and control system project. COSMO
 
 ### Key Files
 - `compose.yaml`: Main Docker Compose configuration
-- `.env`: Environment variables and version configuration
+- `.env`: Environment variables and version configuration (set `OPENC3_LOCAL_MODE=1`)
 - `openc3.sh`/`openc3.bat`: Main CLI entry points
 - `plugins/`: Plugin directory structure
+- `plugins/targets_modified/`: Local mode development files (auto-synced)
 
 ## Development Workflow
 
@@ -42,6 +58,33 @@ This is a COSMOS (OpenC3) cloud-native command and control system project. COSMO
 # Clean up volumes and data
 ./openc3.sh cleanup
 ```
+
+### Local Mode Development
+With `OPENC3_LOCAL_MODE=1` enabled in `.env`:
+
+1. **Edit Files Locally**: Modify scripts and screens in `plugins/targets_modified/`
+2. **Automatic Sync**: Changes sync instantly to COSMOS
+3. **Reload in COSMOS**: Use "Reload" button in Script Runner for scripts
+4. **No Rebuild Required**: Immediate testing without plugin reinstallation
+
+#### Local Mode File Structure
+```
+plugins/
+├── targets_modified/
+│   ├── INST/
+│   │   ├── procedures/          # Ruby scripts
+│   │   ├── screens/             # Screen definitions
+│   │   └── lib/                 # Shared libraries
+│   └── EXAMPLE/
+│       ├── procedures/
+│       └── screens/
+```
+
+#### Local Mode Best Practices
+- Use Visual Studio Code for editing
+- Configuration manage the entire project directory
+- Copy modified files back to original plugin for releases
+- Rebuild plugins with: `./openc3.sh cli rake build VERSION=1.0.1`
 
 ### Plugin Development
 
@@ -222,7 +265,15 @@ docker compose restart [service-name]
 - Monitor Traefik routing configuration
 
 ## License Considerations
-- COSMOS is licensed under AGPLv3
-- Consider license implications for commercial use
-- Review plugin licensing requirements
-- Ensure compliance with open source obligations
+- **COSMOS Core**: Licensed under AGPLv3 (free, open source)
+- **AGPLv3 Requirements**: Users must have access to COSMOS source code and any extensions
+- **Commercial Use**: Consider license implications for proprietary extensions
+- **Plugin Development**: Extensions built on COSMOS must comply with AGPLv3
+- **Source Code Access**: Must provide source code access to all users
+
+## Core Single Server Limitations
+- **User Management**: Single user with shared admin password
+- **Scalability**: Limited to single server deployment
+- **Enterprise Features**: No calendar, autonomic features, or role-based access
+- **Support**: No official OpenC3 support included
+- **Production Use**: Not recommended for production environments requiring multi-user access
