@@ -199,8 +199,8 @@ services:
     image: "${OPENC3_REGISTRY}/${OPENC3_NAMESPACE}/openc3-traefik${OPENC3_IMAGE_SUFFIX}:${OPENC3_TAG}"
     volumes:
       - "./cacert.pem:/devel/cacert.pem:z"
-      - "./openc3-traefik/traefik.yaml:/etc/traefik/traefik.yaml:z"
-      # - "./openc3-traefik/traefik-allow-http.yaml:/etc/traefik/traefik.yaml:z"
+      # - "./openc3-traefik/traefik.yaml:/etc/traefik/traefik.yaml:z"
+      - "./openc3-traefik/traefik-allow-http.yaml:/etc/traefik/traefik.yaml:z"
       # - "./openc3-traefik/traefik-ssl.yaml:/etc/traefik/traefik.yaml:z"
       # - "./openc3-traefik/traefik-letsencrypt.yaml:/etc/traefik/traefik.yaml:z"
       # - "./openc3-traefik/cert.key:/etc/traefik/cert.key:z"
