@@ -4,15 +4,33 @@
     update_cache: yes
   when: not (cosmos_skip_docker_install | default(false))
 
-- name: Install required packages
+- name: Add Docker's official GPG key
+  apt_key:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    state: present
+  when: not (cosmos_skip_docker_install | default(false))
+  ignore_errors: yes
+
+- name: Add Docker repository
+  apt_repository:
+    repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+    state: present
+  when: not (cosmos_skip_docker_install | default(false))
+  ignore_errors: yes
+
+- name: Install Docker packages
   package:
     name:
-      - docker.io
-      - docker-compose
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - docker-compose-plugin
       - git
       - curl
     state: present
+    update_cache: yes
   when: not (cosmos_skip_docker_install | default(false))
+  ignore_errors: yes  # Allow to continue if Docker already installed
 
 - name: Start and enable Docker
   systemd:
@@ -20,6 +38,7 @@
     state: started
     enabled: yes
   when: not (cosmos_skip_docker_install | default(false))
+  ignore_errors: yes  # Allow to continue if Docker already running
 
 - name: Create cosmos user
   user:
@@ -28,14 +47,29 @@
     shell: /bin/bash
     create_home: yes
     system: no
-  when: cosmos_user != ansible_user
+  when: cosmos_user != (ansible_user | default('root'))
 
 - name: Add cosmos user to docker group
   user:
     name: "{{ cosmos_user }}"
     groups: docker
     append: yes
-  when: not (cosmos_skip_docker_install | default(false)) and cosmos_user != ansible_user
+  when: not (cosmos_skip_docker_install | default(false)) and cosmos_user != (ansible_user | default('root'))
+
+- name: Add deployment user to cosmos group (for development access)
+  user:
+    name: "{{ ansible_user | default('root') }}"
+    groups: "{{ cosmos_user }}"
+    append: yes
+  when: cosmos_user != (ansible_user | default('root'))
+
+- name: Set up sudo access for cosmos user (production deployments)
+  lineinfile:
+    path: /etc/sudoers.d/cosmos
+    line: "{{ cosmos_user }} ALL=(ALL) NOPASSWD: /usr/bin/docker, /usr/bin/docker-compose"
+    create: yes
+    mode: '0440'
+  when: cosmos_user != (ansible_user | default('root')) and (cosmos_environment | default('dev')) != 'dev'
 
 - name: Create cosmos directories
   file:

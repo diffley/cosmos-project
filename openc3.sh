@@ -125,7 +125,9 @@ case $1 in
     [ -f ".env.$ENV" ] && ENV_FILES="$ENV_FILES --env-file .env.$ENV"
     [ -f ".env.local" ] && ENV_FILES="$ENV_FILES --env-file .env.local"
     [ -f ".env.secrets" ] && ENV_FILES="$ENV_FILES --env-file .env.secrets"
-    COMPOSE_FILE=compose.yaml ${DOCKER_COMPOSE_COMMAND} $ENV_FILES -f compose.yaml up -d
+    COMPOSE_FILES="-f compose.yaml"
+    [ -f "compose.$ENV.yaml" ] && COMPOSE_FILES="$COMPOSE_FILES -f compose.$ENV.yaml"
+    COMPOSE_FILE=compose.yaml ${DOCKER_COMPOSE_COMMAND} $ENV_FILES $COMPOSE_FILES up -d
     ;;
   run-ubi )
     ENV_FILES="--env-file .env.defaults"

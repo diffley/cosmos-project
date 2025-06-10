@@ -2,11 +2,40 @@
 - name: Prepare hosts for COSMOS deployment
   hosts: cosmos_servers
   become: yes
+  vars_files:
+    - ../inventories/all.yml
 
   tasks:
     - name: Install system requirements
       include_role:
         name: cosmos-requirements
+
+    - name: Generate environment configuration
+      include_role:
+        name: cosmos-config
+
+    # Air-gapped specific tasks (only run when configured)
+    - name: Copy internal CA certificate
+      copy:
+        src: "{{ cosmos_ca_bundle_source }}"
+        dest: "{{ cosmos_airgap_ca_bundle }}"
+        owner: "{{ cosmos_user }}"
+        group: "{{ cosmos_user }}"
+        mode: '0644'
+      when: cosmos_airgap_ca_bundle is defined
+
+    - name: Verify Nexus registry connectivity
+      uri:
+        url: "{{ cosmos_airgap_registry }}/v2/_catalog"
+        method: GET
+        status_code: 200
+      register: nexus_check
+      when: cosmos_airgap_registry is defined
+
+    - name: Display registry status
+      debug:
+        msg: "Nexus registry accessible at {{ cosmos_airgap_registry }}"
+      when: nexus_check is defined and nexus_check.status is defined and nexus_check.status == 200
 
     - name: Validate Docker installation
       command: docker --version

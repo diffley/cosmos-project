@@ -21,7 +21,7 @@
     dest: "{{ cosmos_home }}/.env.secrets"
     owner: "{{ cosmos_user }}"
     group: "{{ cosmos_user }}"
-    mode: '0600'
+    mode: '0640'  # Allow group read for development access
   no_log: true
 
 - name: Set cosmos home ownership

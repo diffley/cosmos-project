@@ -1,0 +1,7 @@
+# Development environment overrides for codespace compatibility
+services:
+  openc3-traefik:
+    ports:
+      # Bind to all interfaces instead of localhost to avoid docker-proxy issues
+      - "2900:2900"
+      - "2943:2943"

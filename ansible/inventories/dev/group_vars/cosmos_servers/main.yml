@@ -4,11 +4,12 @@
 cosmos_environment: dev
 
 # Development-specific settings
-cosmos_dev_registry: docker.io
-cosmos_dev_namespace: openc3inc
-cosmos_dev_tag: "6.4.2"
+cosmos_registry: docker.io
+cosmos_namespace: openc3inc
+cosmos_tag: "6.4.2"
 
-# Enable additional debugging in dev
+# Enable development features
 cosmos_log_level: debug
-cosmos_enable_local_mode: true
-cosmos_enable_demo: true
+cosmos_local_mode: true
+cosmos_demo: true
+cosmos_deployment_method: file_copy

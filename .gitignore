@@ -49,3 +49,9 @@ yarn-error.log*
 node_modules
 
 typescript
+
+# Ansible outputs and build artifacts
+ansible/test-deployment/
+.ansible/
+ansible.log
+*.retry

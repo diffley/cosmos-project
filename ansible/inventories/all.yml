@@ -6,7 +6,6 @@ cosmos_user: cosmos
 cosmos_home: /opt/cosmos
 cosmos_repo: https://github.com/your-org/cosmos-project.git
 cosmos_version: main
-cosmos_build: true
 
 # Default container settings
 cosmos_tag: "6.4.2"

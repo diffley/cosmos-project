@@ -8,28 +8,13 @@
   become_user: "{{ cosmos_user }}"
   when: cosmos_deployment_method | default('git') == 'git'
 
-- name: Copy COSMOS source files (file-based deployment)
+- name: Copy COSMOS project (file-based deployment)
   copy:
-    src: "{{ item }}"
+    src: "/workspaces/cosmos-project/"
     dest: "{{ cosmos_home }}/"
     owner: "{{ cosmos_user }}"
     group: "{{ cosmos_user }}"
     mode: preserve
-  with_fileglob:
-    - "/workspaces/cosmos-project/*"
-  when: cosmos_deployment_method | default('git') == 'file_copy'
-
-- name: Copy COSMOS directories (file-based deployment)
-  synchronize:
-    src: "/workspaces/cosmos-project/"
-    dest: "{{ cosmos_home }}/"
-    rsync_opts:
-      - "--exclude=.git"
-      - "--exclude=test-deployment"
-      - "--exclude=node_modules"
-      - "--exclude=*.log"
-    recursive: yes
-  delegate_to: localhost
   when: cosmos_deployment_method | default('git') == 'file_copy'
 
 - name: Set ownership for copied files

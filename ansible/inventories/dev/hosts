@@ -1,7 +1,2 @@
 [cosmos_servers]
-cosmos-dev-01 ansible_host=10.0.1.10 cosmos_environment=dev
-cosmos-dev-02 ansible_host=10.0.1.11 cosmos_environment=dev
-
-[cosmos_servers:vars]
-ansible_user=ubuntu
-ansible_ssh_private_key_file=~/.ssh/cosmos-dev.pem
+localhost ansible_connection=local cosmos_environment=dev

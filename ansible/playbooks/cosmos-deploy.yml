@@ -1,39 +1,51 @@
 ---
-- name: Deploy COSMOS/OpenC3
+- name: Deploy COSMOS application
   hosts: cosmos_servers
   become: yes
-  vars:
-    cosmos_user: cosmos
-    cosmos_home: /opt/cosmos
-    cosmos_repo: https://github.com/your-org/cosmos-project.git
+  vars_files:
+    - ../inventories/all.yml
 
   tasks:
-    - name: Prepare system for COSMOS
-      include_role:
-        name: cosmos-requirements
+    - name: Copy COSMOS project files (local development)
+      shell: "rsync -av --exclude='.git' --exclude='ansible' --exclude='test-deployment' {{ cosmos_source_path | default('/workspaces/cosmos-project') }}/ {{ cosmos_home }}/"
+      when: cosmos_deployment_method | default('git') == 'file_copy'
+      
+    - name: Fix directory ownership
+      file:
+        path: "{{ cosmos_home }}"
+        owner: "{{ cosmos_user }}"
+        group: "{{ cosmos_user }}"
+        recurse: yes
+      when: cosmos_deployment_method | default('git') == 'file_copy'
 
-    - name: Configure COSMOS environment
-      include_role:
-        name: cosmos-config
+    - name: Clone COSMOS repository
+      git:
+        repo: "{{ cosmos_repo }}"
+        dest: "{{ cosmos_home }}"
+        version: "{{ cosmos_version | default('main') }}"
+        force: yes
+      when: cosmos_deployment_method | default('git') == 'git'
 
-    - name: Deploy COSMOS application
-      include_role:
-        name: cosmos-deploy
+    - name: Make openc3.sh executable
+      file:
+        path: "{{ cosmos_home }}/openc3.sh"
+        mode: '0755'
 
-    - name: Install COSMOS plugins
-      include_role:
-        name: cosmos-plugins
-      when: cosmos_plugins is defined
+    - name: Stop existing COSMOS services
+      shell: "cd {{ cosmos_home }} && sudo -u {{ cosmos_user }} ./openc3.sh stop"
+      ignore_errors: yes
 
-    - name: Verify COSMOS deployment
-      uri:
-        url: "http://{{ ansible_default_ipv4.address }}:2900"
-        method: GET
-        status_code: 200
-      retries: 10
-      delay: 30
-      register: cosmos_health_check
+    - name: Pull COSMOS container images
+      shell: "cd {{ cosmos_home }} && sudo -u {{ cosmos_user }} docker compose --env-file .env.defaults --env-file .env.{{ cosmos_environment }} pull"
+      when: cosmos_pull_images | default(true)
 
-    - name: Display deployment status
-      debug:
-        msg: "COSMOS deployed successfully at http://{{ ansible_default_ipv4.address }}:2900"
+    - name: Start COSMOS services
+      shell: "cd {{ cosmos_home }} && sudo -u {{ cosmos_user }} ./openc3.sh run {{ cosmos_environment }}"
+      when: cosmos_start_services | default(true)
+
+    - name: Wait for COSMOS to start
+      wait_for:
+        port: 2900
+        host: "{{ ansible_default_ipv4.address }}"
+        delay: 30
+        timeout: 300

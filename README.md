@@ -41,20 +41,60 @@ Direct usage for development and testing:
 ```
 
 ### Organizational Deployment
-Ansible-based for production environments:
+Ansible-based infrastructure management for dev/staging/production environments:
+
+**Environment Setup (prepare hosts):**
 ```bash
 cd ansible
-ansible-playbook -i inventories/prod playbooks/cosmos-deploy.yml
+ansible-playbook -i inventories/dev/hosts playbooks/cosmos-prep.yml     # Development
+ansible-playbook -i inventories/prod/hosts playbooks/cosmos-prep.yml    # Production
 ```
 
-### Air-Gapped Deployment
-For secure/offline environments:
+**Application Deployment:**
 ```bash
-# Create bundle
+ansible-playbook -i inventories/dev/hosts playbooks/cosmos-deploy.yml   # Development
+ansible-playbook -i inventories/prod/hosts playbooks/cosmos-deploy.yml  # Production
+```
+
+**Deployment Control Options:**
+```bash
+# Pull images only (no start)
+ansible-playbook -i inventories/dev/hosts playbooks/cosmos-deploy.yml --extra-vars="cosmos_start_services=false"
+
+# Start services only (no pull)
+ansible-playbook -i inventories/dev/hosts playbooks/cosmos-deploy.yml --extra-vars="cosmos_pull_images=false"
+
+# Full deployment (default)
+ansible-playbook -i inventories/dev/hosts playbooks/cosmos-deploy.yml
+```
+
+**Available Environments:**
+- `dev`: Local development with Docker already installed (codespaces)
+- `prod`: Production servers with full Docker installation
+- `airgap`: Air-gapped/secure environments with internal registries
+
+**Post-deployment:**
+- Access COSMOS at http://target-host:2900 (after ~2 minutes)
+- SSH to target and run: `cd /opt/cosmos && sudo -u cosmos ./openc3.sh stop` to stop
+
+### Air-Gapped Deployment
+For secure/offline environments using internal Nexus registry:
+```bash
+# Create bundle (excludes container images - use Nexus registry)
 ./scripts/bundle-for-airgap.sh 6.4.2
 
-# Deploy in air-gapped environment
-ansible-playbook -i inventories/airgap playbooks/cosmos-deploy.yml
+# Prepare air-gapped hosts
+ansible-playbook -i inventories/airgap/hosts playbooks/cosmos-prep.yml
+
+# Deploy application
+ansible-playbook -i inventories/airgap/hosts playbooks/cosmos-deploy.yml
+```
+
+### Manual Cleanup
+```bash
+./openc3.sh cleanup
+rm -rf /opt/cosmos
+docker stop $(docker ps -q) && docker system prune -f
 ```
 
 ## Documentation
