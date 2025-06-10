@@ -1,0 +1,88 @@
+---
+# COSMOS Deployment Playbook
+# Deploys COSMOS code and starts services using openc3.sh
+- name: Deploy COSMOS application
+  hosts: all
+  become: yes
+
+  vars:
+    cosmos_user: "{{ cosmos_user | default('cosmos') }}"
+    cosmos_home: "{{ cosmos_home | default('/opt/cosmos') }}"
+    cosmos_repo: "{{ cosmos_repo | default('https://github.com/your-org/cosmos-project.git') }}"
+    cosmos_version: "{{ cosmos_version | default('main') }}"
+    deployment_method: "{{ deployment_method | default('git') }}"
+    cosmos_source_path: "{{ cosmos_source_path | default('/workspaces/cosmos-project') }}"
+
+  tasks:
+    - name: Stop existing COSMOS services
+      shell: "./openc3.sh stop"
+      args:
+        chdir: "{{ cosmos_home }}"
+      become_user: "{{ cosmos_user }}"
+      ignore_errors: yes
+
+    - name: Deploy via Git clone
+      git:
+        repo: "{{ cosmos_repo }}"
+        dest: "{{ cosmos_home }}"
+        version: "{{ cosmos_version }}"
+        force: yes
+      become_user: "{{ cosmos_user }}"
+      when: deployment_method == 'git'
+
+    - name: Deploy via file copy (development)
+      synchronize:
+        src: "{{ cosmos_source_path }}/"
+        dest: "{{ cosmos_home }}/"
+        delete: yes
+        rsync_opts:
+          - "--exclude=.git"
+          - "--exclude=ansible"
+          - "--exclude=test-deployment"
+          - "--exclude=openc3"
+      when: deployment_method == 'copy'
+
+    - name: Fix ownership for copied files
+      file:
+        path: "{{ cosmos_home }}"
+        owner: "{{ cosmos_user }}"
+        group: "{{ cosmos_user }}"
+        recurse: yes
+      when: deployment_method == 'copy'
+
+    - name: Template environment configuration
+      template:
+        src: ../templates/env.j2
+        dest: "{{ cosmos_home }}/.env"
+        owner: "{{ cosmos_user }}"
+        group: "{{ cosmos_user }}"
+        mode: '0644'
+
+    - name: Make openc3.sh executable
+      file:
+        path: "{{ cosmos_home }}/openc3.sh"
+        mode: '0755'
+
+    - name: Build COSMOS containers
+      shell: "./openc3.sh build"
+      args:
+        chdir: "{{ cosmos_home }}"
+      become_user: "{{ cosmos_user }}"
+      when: cosmos_build | default(true)
+
+    - name: Start COSMOS services
+      shell: "./openc3.sh run"
+      args:
+        chdir: "{{ cosmos_home }}"
+      become_user: "{{ cosmos_user }}"
+
+    - name: Wait for COSMOS to start
+      wait_for:
+        port: 2900
+        host: "{{ ansible_host | default('localhost') }}"
+        delay: 30
+        timeout: 300
+
+    - name: Display deployment success
+      debug:
+        msg: "COSMOS deployed successfully! Access at http://{{ ansible_host | default('localhost') }}:2900"

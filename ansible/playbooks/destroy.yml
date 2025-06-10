@@ -1,0 +1,53 @@
+---
+# COSMOS Cleanup/Destroy Playbook
+# Stops services and cleans up COSMOS deployment
+- name: Cleanup COSMOS deployment
+  hosts: all
+  become: yes
+
+  vars:
+    cosmos_user: "{{ cosmos_user | default('cosmos') }}"
+    cosmos_home: "{{ cosmos_home | default('/opt/cosmos') }}"
+    remove_data: "{{ remove_data | default(false) }}"
+    remove_user: "{{ remove_user | default(false) }}"
+
+  tasks:
+    - name: Stop COSMOS services
+      shell: "./openc3.sh stop"
+      args:
+        chdir: "{{ cosmos_home }}"
+      become_user: "{{ cosmos_user }}"
+      ignore_errors: yes
+
+    - name: Cleanup COSMOS volumes and containers
+      shell: "./openc3.sh cleanup force"
+      args:
+        chdir: "{{ cosmos_home }}"
+      become_user: "{{ cosmos_user }}"
+      ignore_errors: yes
+
+    - name: Remove COSMOS data directories
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - "{{ cosmos_home }}/logs"
+        - "{{ cosmos_home }}/data"
+      when: remove_data
+
+    - name: Remove COSMOS home directory
+      file:
+        path: "{{ cosmos_home }}"
+        state: absent
+      when: remove_data
+
+    - name: Remove cosmos user
+      user:
+        name: "{{ cosmos_user }}"
+        state: absent
+        remove: yes
+      when: remove_user and cosmos_user != ansible_user
+
+    - name: Display cleanup complete message
+      debug:
+        msg: "COSMOS cleanup complete. Data removed: {{ remove_data }}, User removed: {{ remove_user }}"

@@ -1,0 +1,24 @@
+---
+# Codespaces/Development Environment Inventory
+all:
+  hosts:
+    localhost:
+      ansible_connection: local
+  vars:
+    # Skip Docker installation (already available in Codespaces)
+    skip_docker_setup: true
+    
+    # Use current user instead of creating cosmos user
+    cosmos_user: "{{ ansible_user | default('codespace') }}"
+    cosmos_home: "/workspaces/cosmos-project"
+    
+    # Development settings
+    deployment_method: copy
+    cosmos_source_path: "/workspaces/cosmos-project"
+    cosmos_build: false  # Skip build for faster iteration
+    
+    # COSMOS configuration
+    cosmos_tag: "6.4.2"
+    cosmos_local_mode: true
+    cosmos_demo: true
+    cosmos_log_level: debug
