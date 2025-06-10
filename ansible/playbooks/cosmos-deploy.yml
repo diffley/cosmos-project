@@ -39,13 +39,27 @@
       shell: "cd {{ cosmos_home }} && sudo -u {{ cosmos_user }} docker compose --env-file .env.defaults --env-file .env.{{ cosmos_environment }} pull"
       when: cosmos_pull_images | default(true)
 
+    - name: Copy deployment environment file
+      copy:
+        src: "{{ cosmos_source_path | default('/workspaces/cosmos-project') }}/.env.deploy"
+        dest: "{{ cosmos_home }}/.env"
+        owner: "{{ cosmos_user }}"
+        group: "{{ cosmos_user }}"
+        mode: '0644'
+      when: cosmos_deployment_method | default('git') == 'file_copy'
+
     - name: Start COSMOS services
-      shell: "cd {{ cosmos_home }} && sudo -u {{ cosmos_user }} ./openc3.sh run {{ cosmos_environment }}"
+      become_user: "{{ cosmos_user }}"
+      shell: "docker compose --env-file .env up -d"
+      args:
+        chdir: "{{ cosmos_home }}"
       when: cosmos_start_services | default(true)
+      environment:
+        COMPOSE_PROJECT_NAME: openc3
 
     - name: Wait for COSMOS to start
       wait_for:
         port: 2900
-        host: "{{ ansible_default_ipv4.address }}"
+        host: "{{ 'localhost' if ansible_host is match('127.0.0.1|localhost') or inventory_hostname is match('127.0.0.1|localhost') else (ansible_host | default(inventory_hostname)) }}"
         delay: 30
         timeout: 300

@@ -116,7 +116,7 @@ services:
       OPENC3_SERVICE_PASSWORD: "${OPENC3_SERVICE_PASSWORD}"
       ANYCABLE_REDIS_URL: "redis://${OPENC3_REDIS_USERNAME}:${OPENC3_REDIS_PASSWORD}@${OPENC3_REDIS_HOSTNAME}:${OPENC3_REDIS_PORT}"
     env_file:
-      - .env.defaults
+      - .env
 
   openc3-cosmos-script-runner-api:
     user: "${OPENC3_USER_ID:-1001}:${OPENC3_GROUP_ID:-1001}"
@@ -150,7 +150,7 @@ services:
       OPENC3_SERVICE_PASSWORD: "${OPENC3_SERVICE_PASSWORD}"
       ANYCABLE_REDIS_URL: "redis://${OPENC3_REDIS_USERNAME}:${OPENC3_REDIS_PASSWORD}@${OPENC3_REDIS_HOSTNAME}:${OPENC3_REDIS_PORT}"
     env_file:
-      - .env.defaults
+      - .env
 
   openc3-operator:
     user: "${OPENC3_USER_ID:-1001}:${OPENC3_GROUP_ID:-1001}"
@@ -190,7 +190,7 @@ services:
       - OPENC3_BUCKET_PASSWORD=${OPENC3_BUCKET_PASSWORD}
       - OPENC3_SERVICE_PASSWORD=${OPENC3_SERVICE_PASSWORD}
     env_file:
-      - .env.defaults
+      - .env
     extra_hosts:
       - host.docker.internal:host-gateway
 
@@ -199,8 +199,8 @@ services:
     image: "${OPENC3_REGISTRY}/${OPENC3_NAMESPACE}/openc3-traefik${OPENC3_IMAGE_SUFFIX}:${OPENC3_TAG}"
     volumes:
       - "./cacert.pem:/devel/cacert.pem:z"
-      # - "./openc3-traefik/traefik.yaml:/etc/traefik/traefik.yaml:z"
-      - "./openc3-traefik/traefik-allow-http.yaml:/etc/traefik/traefik.yaml:z"
+      - "./openc3-traefik/traefik.yaml:/etc/traefik/traefik.yaml:z"
+      # - "./openc3-traefik/traefik-allow-http.yaml:/etc/traefik/traefik.yaml:z"
       # - "./openc3-traefik/traefik-ssl.yaml:/etc/traefik/traefik.yaml:z"
       # - "./openc3-traefik/traefik-letsencrypt.yaml:/etc/traefik/traefik.yaml:z"
       # - "./openc3-traefik/cert.key:/etc/traefik/cert.key:z"
@@ -258,7 +258,7 @@ services:
       - OPENC3_SR_BUCKET_USERNAME=${OPENC3_SR_BUCKET_USERNAME}
       - OPENC3_SR_BUCKET_PASSWORD=${OPENC3_SR_BUCKET_PASSWORD}
     env_file:
-      - .env.defaults
+      - .env
 
 volumes:
   openc3-redis-v: {}

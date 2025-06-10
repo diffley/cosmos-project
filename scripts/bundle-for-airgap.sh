@@ -18,8 +18,7 @@ rsync -av --exclude='.git' --exclude='node_modules' --exclude='*.log' . "$BUNDLE
 # Bundle runtime package dependencies
 echo "Bundling runtime package dependencies..."
 
-# Bundle node_modules (already included in source)
-echo "✓ NPM packages already bundled in node_modules/"
+# Note: This project uses containerized services, not node_modules
 
 # Bundle Ruby gems from plugins  
 echo "Copying plugin gems..."
@@ -46,22 +45,37 @@ cat > "$BUNDLE_DIR/DEPENDENCIES.md" << 'EOF'
 - NPM: mirror registry.npmjs.org
 
 ## Runtime Dependencies
-- NPM packages: Bundled in source (node_modules/)
 - Ruby gems: Plugin-specific gems included
 - Python packages: Downloaded at runtime (configure PyPI mirror)
 - Alpine packages: Downloaded at runtime (configure APK mirror)
 EOF
 
-# Note: Container images should be pre-loaded into your Nexus registry
-echo "Skipping container image bundling - using Nexus registry..."
-echo "Ensure these images are available in your Nexus registry:"
-echo "  - openc3/openc3-cosmos-cmd-tlm-api:$COSMOS_VERSION"
-echo "  - openc3/openc3-cosmos-script-runner-api:$COSMOS_VERSION"
-echo "  - openc3/openc3-operator:$COSMOS_VERSION"
-echo "  - openc3/openc3-cosmos-init:$COSMOS_VERSION"
-echo "  - openc3/openc3-minio:$COSMOS_VERSION"
-echo "  - openc3/openc3-redis:$COSMOS_VERSION"
-echo "  - openc3/openc3-traefik:$COSMOS_VERSION"
+# Export container images for separate transfer
+echo "Exporting container images for airgap transfer..."
+CONTAINER_BUNDLE="cosmos-containers-${COSMOS_VERSION}.tar"
+
+# Pull and save container images
+echo "Pulling and saving OpenC3 container images..."
+docker pull openc3inc/openc3-cosmos-cmd-tlm-api:$COSMOS_VERSION
+docker pull openc3inc/openc3-cosmos-script-runner-api:$COSMOS_VERSION  
+docker pull openc3inc/openc3-operator:$COSMOS_VERSION
+docker pull openc3inc/openc3-cosmos-init:$COSMOS_VERSION
+docker pull openc3inc/openc3-minio:$COSMOS_VERSION
+docker pull openc3inc/openc3-redis:$COSMOS_VERSION
+docker pull openc3inc/openc3-traefik:$COSMOS_VERSION
+
+# Save all images to tar file
+docker save \
+  openc3inc/openc3-cosmos-cmd-tlm-api:$COSMOS_VERSION \
+  openc3inc/openc3-cosmos-script-runner-api:$COSMOS_VERSION \
+  openc3inc/openc3-operator:$COSMOS_VERSION \
+  openc3inc/openc3-cosmos-init:$COSMOS_VERSION \
+  openc3inc/openc3-minio:$COSMOS_VERSION \
+  openc3inc/openc3-redis:$COSMOS_VERSION \
+  openc3inc/openc3-traefik:$COSMOS_VERSION \
+  -o "$CONTAINER_BUNDLE"
+
+echo "Container images saved to: $CONTAINER_BUNDLE"
 
 # Create deployment script
 cat > "$BUNDLE_DIR/deploy-airgap.sh" << 'EOF'
@@ -79,12 +93,18 @@ echo "Deploying COSMOS in air-gapped environment..."
 sudo cp -r cosmos-source/* "$COSMOS_HOME/"
 sudo chown -R "$COSMOS_USER:$COSMOS_USER" "$COSMOS_HOME"
 
-# Container images are pulled from Nexus registry automatically
-echo "Using Nexus registry for container images..."
+# Load container images from bundle
+echo "Loading container images..."
+if [ -f "../cosmos-containers-*.tar" ]; then
+    docker load -i ../cosmos-containers-*.tar
+    echo "Container images loaded successfully"
+else
+    echo "Warning: No container bundle found. Ensure images are available in registry."
+fi
 
-# Deploy using air-gapped configuration
+# Deploy using standard configuration
 cd "$COSMOS_HOME"
-sudo -u "$COSMOS_USER" ./openc3.sh run airgap
+sudo -u "$COSMOS_USER" ./openc3.sh run
 
 echo "COSMOS deployed successfully in air-gapped mode!"
 EOF
@@ -99,10 +119,12 @@ tar -czf "cosmos-airgap-${COSMOS_VERSION}.tar.gz" "$BUNDLE_DIR"
 rm -rf "$BUNDLE_DIR"
 
 echo "Air-gapped bundle created: cosmos-airgap-${COSMOS_VERSION}.tar.gz"
+echo "Container images saved to: $CONTAINER_BUNDLE"
 echo ""
 echo "To deploy in air-gapped environment:"
-echo "1. Load container images into your Nexus registry"
-echo "2. Configure package mirrors in Nexus (see DEPENDENCIES.md)"
-echo "3. Transfer cosmos-airgap-${COSMOS_VERSION}.tar.gz to target system"
-echo "4. Extract: tar -xzf cosmos-airgap-${COSMOS_VERSION}.tar.gz"
-echo "5. Run: cd cosmos-airgap-bundle && ./deploy-airgap.sh"
+echo "1. Transfer both files to target system:"
+echo "   - cosmos-airgap-${COSMOS_VERSION}.tar.gz (main bundle)"
+echo "   - $CONTAINER_BUNDLE (container images)"
+echo "2. Extract: tar -xzf cosmos-airgap-${COSMOS_VERSION}.tar.gz"
+echo "3. Run: cd cosmos-airgap-bundle && ./deploy-airgap.sh"
+echo "4. Configure package mirrors in Nexus if needed (see DEPENDENCIES.md)"
