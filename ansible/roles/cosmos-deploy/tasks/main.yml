@@ -55,7 +55,7 @@
 - name: Wait for COSMOS to start
   wait_for:
     port: 2900
-    host: "{{ ansible_default_ipv4.address }}"
+    host: "{{ inventory_hostname }}"
     delay: 30
     timeout: 300
   when: cosmos_deploy_cosmos | default(false)

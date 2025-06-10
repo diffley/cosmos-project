@@ -90,11 +90,10 @@ ansible-playbook -i inventories/airgap/hosts playbooks/cosmos-prep.yml
 ansible-playbook -i inventories/airgap/hosts playbooks/cosmos-deploy.yml
 ```
 
-### Manual Cleanup
+### Manual Cleanup After Unsuccessful Ansible Application
 ```bash
-./openc3.sh cleanup
 rm -rf /opt/cosmos
-docker stop $(docker ps -q) && docker system prune -f
+docker stop $(docker ps -aq) && docker system prune -af
 ```
 
 ## Documentation

@@ -25,12 +25,15 @@
       - docker-ce-cli
       - containerd.io
       - docker-compose-plugin
-      - git
-      - curl
     state: present
     update_cache: yes
   when: not (cosmos_skip_docker_install | default(false))
   ignore_errors: yes  # Allow to continue if Docker already installed
+
+- name: Check if docker-proxy exists
+  stat:
+    path: /usr/bin/docker-proxy
+  register: docker_proxy_check
 
 - name: Start and enable Docker
   systemd:
@@ -54,7 +57,7 @@
     name: "{{ cosmos_user }}"
     groups: docker
     append: yes
-  when: not (cosmos_skip_docker_install | default(false)) and cosmos_user != (ansible_user | default('root'))
+  when: cosmos_user != (ansible_user | default('root'))
 
 - name: Add deployment user to cosmos group (for development access)
   user:
