@@ -1,0 +1,20 @@
+---
+# Common variables for all COSMOS deployments
+
+cosmos_user: cosmos
+cosmos_home: /opt/cosmos
+cosmos_repo: https://github.com/your-org/cosmos-project.git
+cosmos_version: main
+cosmos_build: true
+
+# Default container settings
+cosmos_tag: "6.4.2"
+cosmos_registry: docker.io
+cosmos_namespace: openc3inc
+cosmos_dependency_registry: docker.io
+cosmos_enterprise_registry: ghcr.io
+cosmos_enterprise_namespace: openc3
+
+# Health check settings
+cosmos_health_check_retries: 10
+cosmos_health_check_delay: 30

@@ -1,0 +1,32 @@
+---
+- name: Template environment defaults
+  template:
+    src: env.defaults.j2
+    dest: "{{ cosmos_home }}/.env.defaults"
+    owner: "{{ cosmos_user }}"
+    group: "{{ cosmos_user }}"
+    mode: '0644'
+
+- name: Template environment-specific config
+  template:
+    src: "env.{{ cosmos_environment }}.j2"
+    dest: "{{ cosmos_home }}/.env.{{ cosmos_environment }}"
+    owner: "{{ cosmos_user }}"
+    group: "{{ cosmos_user }}"
+    mode: '0644'
+
+- name: Template secrets file
+  template:
+    src: env.secrets.j2
+    dest: "{{ cosmos_home }}/.env.secrets"
+    owner: "{{ cosmos_user }}"
+    group: "{{ cosmos_user }}"
+    mode: '0600'
+  no_log: true
+
+- name: Set cosmos home ownership
+  file:
+    path: "{{ cosmos_home }}"
+    owner: "{{ cosmos_user }}"
+    group: "{{ cosmos_user }}"
+    recurse: yes

@@ -1,0 +1,39 @@
+---
+- name: Deploy COSMOS/OpenC3
+  hosts: cosmos_servers
+  become: yes
+  vars:
+    cosmos_user: cosmos
+    cosmos_home: /opt/cosmos
+    cosmos_repo: https://github.com/your-org/cosmos-project.git
+
+  tasks:
+    - name: Prepare system for COSMOS
+      include_role:
+        name: cosmos-requirements
+
+    - name: Configure COSMOS environment
+      include_role:
+        name: cosmos-config
+
+    - name: Deploy COSMOS application
+      include_role:
+        name: cosmos-deploy
+
+    - name: Install COSMOS plugins
+      include_role:
+        name: cosmos-plugins
+      when: cosmos_plugins is defined
+
+    - name: Verify COSMOS deployment
+      uri:
+        url: "http://{{ ansible_default_ipv4.address }}:2900"
+        method: GET
+        status_code: 200
+      retries: 10
+      delay: 30
+      register: cosmos_health_check
+
+    - name: Display deployment status
+      debug:
+        msg: "COSMOS deployed successfully at http://{{ ansible_default_ipv4.address }}:2900"

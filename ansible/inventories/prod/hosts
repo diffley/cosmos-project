@@ -1,0 +1,7 @@
+[cosmos_servers]
+cosmos-prod-01 ansible_host=10.0.2.10 cosmos_environment=prod
+cosmos-prod-02 ansible_host=10.0.2.11 cosmos_environment=prod
+
+[cosmos_servers:vars]
+ansible_user=ubuntu
+ansible_ssh_private_key_file=~/.ssh/cosmos-prod.pem

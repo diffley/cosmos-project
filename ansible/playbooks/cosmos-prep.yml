@@ -1,0 +1,22 @@
+---
+- name: Prepare hosts for COSMOS deployment
+  hosts: cosmos_servers
+  become: yes
+
+  tasks:
+    - name: Install system requirements
+      include_role:
+        name: cosmos-requirements
+
+    - name: Create COSMOS user and directories
+      include_role:
+        name: cosmos-config
+        tasks_from: user_setup
+
+    - name: Validate Docker installation
+      command: docker --version
+      register: docker_version
+      
+    - name: Display preparation status
+      debug:
+        msg: "Host prepared for COSMOS. Docker version: {{ docker_version.stdout }}"

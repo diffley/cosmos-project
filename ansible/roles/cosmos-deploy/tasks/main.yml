@@ -1,0 +1,40 @@
+---
+- name: Clone COSMOS repository
+  git:
+    repo: "{{ cosmos_repo }}"
+    dest: "{{ cosmos_home }}"
+    version: "{{ cosmos_version | default('main') }}"
+    force: yes
+  become_user: "{{ cosmos_user }}"
+
+- name: Make openc3.sh executable
+  file:
+    path: "{{ cosmos_home }}/openc3.sh"
+    mode: '0755'
+
+- name: Stop existing COSMOS services
+  command: ./openc3.sh stop
+  args:
+    chdir: "{{ cosmos_home }}"
+  become_user: "{{ cosmos_user }}"
+  ignore_errors: yes
+
+- name: Build COSMOS containers
+  command: ./openc3.sh build
+  args:
+    chdir: "{{ cosmos_home }}"
+  become_user: "{{ cosmos_user }}"
+  when: cosmos_build | default(true)
+
+- name: Deploy COSMOS
+  command: "./openc3.sh run {{ cosmos_environment }}"
+  args:
+    chdir: "{{ cosmos_home }}"
+  become_user: "{{ cosmos_user }}"
+
+- name: Wait for COSMOS to start
+  wait_for:
+    port: 2900
+    host: "{{ ansible_default_ipv4.address }}"
+    delay: 30
+    timeout: 300

@@ -1,0 +1,34 @@
+---
+- name: Destroy COSMOS deployment
+  hosts: cosmos_servers
+  become: yes
+  vars:
+    cosmos_home: /opt/cosmos
+
+  tasks:
+    - name: Stop COSMOS services
+      command: ./openc3.sh stop
+      args:
+        chdir: "{{ cosmos_home }}"
+      become_user: cosmos
+      ignore_errors: yes
+
+    - name: Cleanup COSMOS data
+      command: ./openc3.sh cleanup force
+      args:
+        chdir: "{{ cosmos_home }}"
+      become_user: cosmos
+      ignore_errors: yes
+
+    - name: Remove COSMOS directory
+      file:
+        path: "{{ cosmos_home }}"
+        state: absent
+      when: cosmos_complete_removal | default(false)
+
+    - name: Remove COSMOS user
+      user:
+        name: cosmos
+        state: absent
+        remove: yes
+      when: cosmos_complete_removal | default(false)

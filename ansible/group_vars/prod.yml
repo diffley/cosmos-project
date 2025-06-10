@@ -1,0 +1,18 @@
+---
+# Production environment specific variables
+
+cosmos_environment: prod
+
+# Production-specific settings
+cosmos_prod_registry: ghcr.io
+cosmos_prod_namespace: openc3
+cosmos_prod_tag: "6.4.2"
+
+# Production hardening
+cosmos_log_level: info
+cosmos_enable_local_mode: false
+cosmos_enable_demo: false
+cosmos_complete_removal: false
+
+# Production bucket (if using external storage)
+# cosmos_prod_bucket_url: https://your-s3-bucket.amazonaws.com

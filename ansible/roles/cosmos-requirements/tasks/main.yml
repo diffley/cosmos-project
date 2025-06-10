@@ -1,0 +1,45 @@
+---
+- name: Update package cache
+  package:
+    update_cache: yes
+
+- name: Install required packages
+  package:
+    name:
+      - docker.io
+      - docker-compose
+      - git
+      - curl
+    state: present
+
+- name: Start and enable Docker
+  systemd:
+    name: docker
+    state: started
+    enabled: yes
+
+- name: Add cosmos user to docker group
+  user:
+    name: "{{ cosmos_user }}"
+    groups: docker
+    append: yes
+
+- name: Create cosmos user
+  user:
+    name: "{{ cosmos_user }}"
+    home: "{{ cosmos_home }}"
+    shell: /bin/bash
+    create_home: yes
+    system: no
+
+- name: Create cosmos directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ cosmos_user }}"
+    group: "{{ cosmos_user }}"
+    mode: '0755'
+  loop:
+    - "{{ cosmos_home }}"
+    - "{{ cosmos_home }}/logs"
+    - "{{ cosmos_home }}/data"
