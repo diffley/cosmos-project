@@ -1,13 +1,16 @@
 @echo off
 setlocal ENABLEDELAYEDEXPANSION
 
+REM Determine environment (default to dev)
+set ENV=%2
+if "%ENV%" == "" set ENV=dev
+if not "%ENV%" == "dev" if not "%ENV%" == "prod" set ENV=dev
+
 if "%1" == "" (
   GOTO usage
 )
 if "%1" == "cli" (
-  REM tokens=* means process the full line
-  REM findstr /V = print lines that don't match, /B beginning of line, /L literal search string, /C:# match #
-  FOR /F "tokens=*" %%i in ('findstr /V /B /L /C:# %~dp0.env') do SET %%i
+  CALL :load_env
   set params=%*
   call set params=%%params:*%1=%%
   REM Start (and remove when done --rm) the openc3-cosmos-cmd-tlm-api container with the current working directory
@@ -18,7 +21,7 @@ if "%1" == "cli" (
   GOTO :EOF
 )
 if "%1" == "cliroot" (
-  FOR /F "tokens=*" %%i in ('findstr /V /B /L /C:# %~dp0.env') do SET %%i
+  CALL :load_env
   set params=%*
   call set params=%%params:*%1=%%
   docker compose -f %~dp0compose.yaml run -it --rm --user=root -v %cd%:/openc3/local -w /openc3/local -e OPENC3_API_PASSWORD=!OPENC3_API_PASSWORD! --no-deps openc3-cosmos-cmd-tlm-api ruby /openc3/bin/openc3cli !params!
@@ -38,7 +41,7 @@ if "%1" == "run" (
   GOTO run
 )
 if "%1" == "util" (
-  FOR /F "tokens=*" %%i in ('findstr /V /B /L /C:# %~dp0.env') do SET %%i
+  CALL :load_env
   GOTO util
 )
 
@@ -78,7 +81,11 @@ goto :try_cleanup
 GOTO :EOF
 
 :run
-  docker compose -f compose.yaml up -d
+  set ENV_FILES=--env-file .env.defaults
+  if exist ".env.%ENV%" set ENV_FILES=%ENV_FILES% --env-file .env.%ENV%
+  if exist ".env.local" set ENV_FILES=%ENV_FILES% --env-file .env.local
+  if exist ".env.secrets" set ENV_FILES=%ENV_FILES% --env-file .env.secrets
+  docker compose %ENV_FILES% -f compose.yaml up -d
   @echo off
 GOTO :EOF
 
@@ -90,14 +97,28 @@ GOTO :EOF
   @echo off
 GOTO :EOF
 
+:load_env
+  REM Load environment configuration in hierarchical order
+  FOR /F "tokens=*" %%i in ('findstr /V /B /L /C:# %~dp0.env.defaults') do SET %%i
+  if exist "%~dp0.env.%ENV%" (
+    FOR /F "tokens=*" %%i in ('findstr /V /B /L /C:# %~dp0.env.%ENV%') do SET %%i
+  )
+  if exist "%~dp0.env.local" (
+    FOR /F "tokens=*" %%i in ('findstr /V /B /L /C:# %~dp0.env.local') do SET %%i
+  )
+  if exist "%~dp0.env.secrets" (
+    FOR /F "tokens=*" %%i in ('findstr /V /B /L /C:# %~dp0.env.secrets') do SET %%i
+  )
+GOTO :EOF
+
 :usage
-  @echo Usage: %0 [cli, cliroot, start, stop, cleanup, run, util] 1>&2
-  @echo *  cli: run a cli command as the default user ('cli help' for more info) 1>&2
-  @echo *  cliroot: run a cli command as the root user ('cli help' for more info) 1>&2
-  @echo *  start: alias for run 1>&2
+  @echo Usage: %0 [cli, cliroot, start, stop, cleanup, run, util] [env] 1>&2
+  @echo *  cli [env]: run a cli command as the default user ('cli help' for more info) 1>&2
+  @echo *  cliroot [env]: run a cli command as the root user ('cli help' for more info) 1>&2
+  @echo *  start [env]: alias for run 1>&2
   @echo *  stop: stop the containers (compose stop) 1>&2
   @echo *  cleanup [local] [force]: REMOVE volumes / data (compose down -v) 1>&2
-  @echo *  run: run the containers (compose up) 1>&2
-  @echo *  util: various helper commands 1>&2
+  @echo *  run [env]: run the containers (compose up) - env can be 'dev' or 'prod' 1>&2
+  @echo *  util [env]: various helper commands 1>&2
 
 @echo on

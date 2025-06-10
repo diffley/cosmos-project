@@ -21,6 +21,7 @@ profile/
 # local env files
 .env.local
 .env.*.local
+.env.secrets
 .env
 
 # Log files

@@ -35,13 +35,13 @@ fi
 set -e
 
 usage() {
-  echo "Usage: $1 [cli, start, stop, cleanup, run, util]" >&2
-  echo "*  cli: run a cli command as the default user ('cli help' for more info)" 1>&2
-  echo "*  start: alias for run" >&2
+  echo "Usage: $1 [cli, start, stop, cleanup, run, util] [env]" >&2
+  echo "*  cli [env]: run a cli command as the default user ('cli help' for more info)" 1>&2
+  echo "*  start [env]: alias for run" >&2
   echo "*  stop: stop the containers (compose stop)" >&2
   echo "*  cleanup [local] [force]: REMOVE volumes / data (compose down -v)" >&2
-  echo "*  run: run the containers (compose up)" >&2
-  echo "*  util: various helper commands" >&2
+  echo "*  run [env]: run the containers (compose up) - env can be 'dev' or 'prod'" >&2
+  echo "*  util [env]: various helper commands" >&2
   exit 1
 }
 
@@ -49,11 +49,33 @@ if [ "$#" -eq 0 ]; then
   usage $0
 fi
 
+# Determine environment (default to dev)
+ENV=${2:-dev}
+if [ "$ENV" != "dev" ] && [ "$ENV" != "prod" ]; then
+  echo "Warning: Unknown environment '$ENV', using 'dev'" >&2
+  ENV="dev"
+fi
+
+# Validate required files exist
+if [ ! -f ".env.defaults" ]; then
+  echo "Error: .env.defaults file not found!" >&2
+  exit 1
+fi
+
 case $1 in
   cli )
-    # Source the .env file to setup environment variables
+    # Source environment files in hierarchical order
     set -a
-    . "$(dirname -- "$0")/.env"
+    . "$(dirname -- "$0")/.env.defaults"
+    if [ -f "$(dirname -- "$0")/.env.$ENV" ]; then
+      . "$(dirname -- "$0")/.env.$ENV"
+    fi
+    if [ -f "$(dirname -- "$0")/.env.local" ]; then
+      . "$(dirname -- "$0")/.env.local"
+    fi
+    if [ -f "$(dirname -- "$0")/.env.secrets" ]; then
+      . "$(dirname -- "$0")/.env.secrets"
+    fi
     # Start (and remove when done --rm) the openc3-cosmos-cmd-tlm-api container with the current working directory
     # mapped as volume (-v) /openc3/local and container working directory (-w) also set to /openc3/local.
     # This allows tools running in the container to have a consistent path to the current working directory.
@@ -63,22 +85,30 @@ case $1 in
     set +a
     ;;
   stop )
-    ${DOCKER_COMPOSE_COMMAND} stop openc3-operator
-    ${DOCKER_COMPOSE_COMMAND} stop openc3-cosmos-script-runner-api
-    ${DOCKER_COMPOSE_COMMAND} stop openc3-cosmos-cmd-tlm-api
+    ENV_FILES="--env-file .env.defaults"
+    [ -f ".env.$ENV" ] && ENV_FILES="$ENV_FILES --env-file .env.$ENV"
+    [ -f ".env.local" ] && ENV_FILES="$ENV_FILES --env-file .env.local"
+    [ -f ".env.secrets" ] && ENV_FILES="$ENV_FILES --env-file .env.secrets"
+    ${DOCKER_COMPOSE_COMMAND} $ENV_FILES stop openc3-operator
+    ${DOCKER_COMPOSE_COMMAND} $ENV_FILES stop openc3-cosmos-script-runner-api
+    ${DOCKER_COMPOSE_COMMAND} $ENV_FILES stop openc3-cosmos-cmd-tlm-api
     sleep 5
-    ${DOCKER_COMPOSE_COMMAND} -f compose.yaml down -t 30
+    ${DOCKER_COMPOSE_COMMAND} $ENV_FILES -f compose.yaml down -t 30
     ;;
   cleanup )
+    ENV_FILES="--env-file .env.defaults"
+    [ -f ".env.$ENV" ] && ENV_FILES="$ENV_FILES --env-file .env.$ENV"
+    [ -f ".env.local" ] && ENV_FILES="$ENV_FILES --env-file .env.local"
+    [ -f ".env.secrets" ] && ENV_FILES="$ENV_FILES --env-file .env.secrets"
     # They can specify 'cleanup force' or 'cleanup local force'
     if [ "$2" == "force" ] || [ "$3" == "force" ]
     then
-      ${DOCKER_COMPOSE_COMMAND} -f compose.yaml down -t 30 -v
+      ${DOCKER_COMPOSE_COMMAND} $ENV_FILES -f compose.yaml down -t 30 -v
     else
       echo "Are you sure? Cleanup removes ALL docker volumes and all COSMOS data! (1-Yes / 2-No)"
       select yn in "Yes" "No"; do
         case $yn in
-          Yes ) ${DOCKER_COMPOSE_COMMAND} -f compose.yaml down -t 30 -v; break;;
+          Yes ) ${DOCKER_COMPOSE_COMMAND} $ENV_FILES -f compose.yaml down -t 30 -v; break;;
           No ) exit;;
         esac
       done
@@ -91,15 +121,32 @@ case $1 in
     fi
     ;;
   start | run )
-    ${DOCKER_COMPOSE_COMMAND} -f compose.yaml up -d
+    ENV_FILES="--env-file .env.defaults"
+    [ -f ".env.$ENV" ] && ENV_FILES="$ENV_FILES --env-file .env.$ENV"
+    [ -f ".env.local" ] && ENV_FILES="$ENV_FILES --env-file .env.local"
+    [ -f ".env.secrets" ] && ENV_FILES="$ENV_FILES --env-file .env.secrets"
+    COMPOSE_FILE=compose.yaml ${DOCKER_COMPOSE_COMMAND} $ENV_FILES -f compose.yaml up -d
     ;;
   run-ubi )
-    OPENC3_IMAGE_SUFFIX=-ubi OPENC3_REDIS_VOLUME=/home/data ${DOCKER_COMPOSE_COMMAND} -f compose.yaml up -d
+    ENV_FILES="--env-file .env.defaults"
+    [ -f ".env.$ENV" ] && ENV_FILES="$ENV_FILES --env-file .env.$ENV"
+    [ -f ".env.local" ] && ENV_FILES="$ENV_FILES --env-file .env.local"
+    [ -f ".env.secrets" ] && ENV_FILES="$ENV_FILES --env-file .env.secrets"
+    OPENC3_IMAGE_SUFFIX=-ubi OPENC3_REDIS_VOLUME=/home/data COMPOSE_FILE=compose.yaml ${DOCKER_COMPOSE_COMMAND} $ENV_FILES -f compose.yaml up -d
     ;;
   util )
     set -a
-    . "$(dirname -- "$0")/.env"
-    scripts/linux/openc3_util.sh "${@:2}"
+    . "$(dirname -- "$0")/.env.defaults"
+    if [ -f "$(dirname -- "$0")/.env.$ENV" ]; then
+      . "$(dirname -- "$0")/.env.$ENV"
+    fi
+    if [ -f "$(dirname -- "$0")/.env.local" ]; then
+      . "$(dirname -- "$0")/.env.local"
+    fi
+    if [ -f "$(dirname -- "$0")/.env.secrets" ]; then
+      . "$(dirname -- "$0")/.env.secrets"
+    fi
+    scripts/linux/openc3_util.sh "${@:3}"
     set +a
     ;;
   * )

@@ -116,7 +116,7 @@ services:
       OPENC3_SERVICE_PASSWORD: "${OPENC3_SERVICE_PASSWORD}"
       ANYCABLE_REDIS_URL: "redis://${OPENC3_REDIS_USERNAME}:${OPENC3_REDIS_PASSWORD}@${OPENC3_REDIS_HOSTNAME}:${OPENC3_REDIS_PORT}"
     env_file:
-      - .env
+      - .env.defaults
 
   openc3-cosmos-script-runner-api:
     user: "${OPENC3_USER_ID:-1001}:${OPENC3_GROUP_ID:-1001}"
@@ -150,7 +150,7 @@ services:
       OPENC3_SERVICE_PASSWORD: "${OPENC3_SERVICE_PASSWORD}"
       ANYCABLE_REDIS_URL: "redis://${OPENC3_REDIS_USERNAME}:${OPENC3_REDIS_PASSWORD}@${OPENC3_REDIS_HOSTNAME}:${OPENC3_REDIS_PORT}"
     env_file:
-      - .env
+      - .env.defaults
 
   openc3-operator:
     user: "${OPENC3_USER_ID:-1001}:${OPENC3_GROUP_ID:-1001}"
@@ -190,7 +190,7 @@ services:
       - OPENC3_BUCKET_PASSWORD=${OPENC3_BUCKET_PASSWORD}
       - OPENC3_SERVICE_PASSWORD=${OPENC3_SERVICE_PASSWORD}
     env_file:
-      - .env
+      - .env.defaults
     extra_hosts:
       - host.docker.internal:host-gateway
 
@@ -258,7 +258,7 @@ services:
       - OPENC3_SR_BUCKET_USERNAME=${OPENC3_SR_BUCKET_USERNAME}
       - OPENC3_SR_BUCKET_PASSWORD=${OPENC3_SR_BUCKET_PASSWORD}
     env_file:
-      - .env
+      - .env.defaults
 
 volumes:
   openc3-redis-v: {}

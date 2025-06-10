@@ -1,7 +1,6 @@
 # Kratos qRadio Research Notes
 
 ## Kratos qRadio System
-*Note: Direct PDF access was blocked (403 error), awaiting vendor documentation for qRadio technical specifications*
 
 ### Required Research Items
 - [ ] qRadio API endpoints and protocols

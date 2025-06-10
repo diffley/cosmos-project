@@ -3,6 +3,15 @@
 ## Project Overview
 This is a COSMOS (OpenC3) cloud-native command and control system project running in **Core Single Server Architecture** with **Local Mode** enabled. COSMOS uses a containerized microservices architecture with Ruby as the primary language and Python support for scripting and interfaces.
 
+## 🎯 CORE DEVELOPMENT PRINCIPLE: CONCISENESS
+**CRITICAL**: Keep all code, configurations, and documentation CONCISE. Write only what's needed for functionality and human readability. Avoid verbose patterns, unnecessary abstractions, and code sprawl. Every line should serve a clear purpose.
+
+### Documentation Standards
+- **BRIEF & ESSENTIAL**: Document only what's necessary - avoid redundant explanations
+- **NO DOCUMENTATION SPRAWL**: Don't create extensive docs for simple concepts
+- **ACTIONABLE ONLY**: Focus on what users need to DO, not exhaustive background
+- **NEVER CREATE**: Documentation files unless explicitly requested
+
 ## Architecture & Deployment Model
 
 ### Core Single Server Architecture
@@ -99,6 +108,8 @@ plugins/
 ```
 
 #### Plugin Configuration Best Practices
+- **LEAN CONFIGURATIONS**: Keep configs minimal - only define what's necessary
+- **AVOID OVER-ENGINEERING**: Don't create complex abstractions for simple needs
 - Use ERB templating for dynamic configurations
 - Define variables in `plugin_instance.json` for reusability
 - Follow the pattern: one target per plugin (unless demo/example)
@@ -113,6 +124,8 @@ plugins/
 ## Ruby Development Guidelines
 
 ### Coding Standards
+- **CONCISE CODE**: Write minimal, readable code - avoid unnecessary complexity and verbose patterns
+- **NO CODE SPRAWL**: Keep functions small (< 20 lines), files focused (< 200 lines), minimize dependencies
 - Follow Ruby community conventions
 - Use descriptive variable names matching COSMOS patterns:
   - `target_name` for target identifiers
@@ -136,6 +149,8 @@ plugins/
 ## Python Development Guidelines
 
 ### Coding Standards
+- **CONCISE CODE**: Write minimal, readable code - avoid unnecessary complexity and verbose patterns
+- **NO CODE SPRAWL**: Keep functions small (< 20 lines), files focused (< 200 lines), minimize dependencies
 - Follow PEP 8 for Python code style
 - Use type hints where appropriate
 - Implement proper exception handling
