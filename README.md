@@ -9,9 +9,10 @@ Cloud-native command and control system with enhanced environment management and
 git clone https://github.com/openc3/cosmos-project.git cosmos-myprojectname
 cd cosmos-myprojectname
 
-# Create secrets file
+# Create local & secrets files
+cp .env.local.example .env.local
 cp .env.secrets.example .env.secrets
-# Edit .env.secrets with your credentials
+# Edit both with your information as needed
 
 # Start COSMOS
 ./openc3.sh run          # Development environment
@@ -26,7 +27,7 @@ cp .env.secrets.example .env.secrets
 
 - **`.env.defaults`**: Base configuration (committed)
 - **`.env.dev`**: Development overrides (committed)  
-- **`.env.prod`**: Production overrides (committed)
+- **`.env.prod`**: Production overrides (committed) - you can add and utilize other environments as needed with additional `.env.{env}` files
 - **`.env.local`**: Personal overrides (gitignored)
 - **`.env.secrets`**: Sensitive data (gitignored)
 
@@ -93,7 +94,8 @@ ansible-playbook -i inventories/airgap/hosts playbooks/cosmos-deploy.yml
 ### Manual Cleanup After Unsuccessful Ansible Application
 ```bash
 rm -rf /opt/cosmos
-docker stop $(docker ps -aq) && docker system prune -af
+docker stop $(docker ps -aq)
+docker system prune -af
 ```
 
 ## Documentation
