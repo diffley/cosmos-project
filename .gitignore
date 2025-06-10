@@ -55,3 +55,4 @@ ansible/test-deployment/
 .ansible/
 ansible.log
 *.retry
+test-deployment/
