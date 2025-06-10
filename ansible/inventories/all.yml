@@ -1,5 +1,6 @@
 ---
 # Common variables for all COSMOS deployments
+# Copy this to each inventory's group_vars/all/ directory
 
 cosmos_user: cosmos
 cosmos_home: /opt/cosmos

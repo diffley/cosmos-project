@@ -1,0 +1,7 @@
+---
+# Default variables for cosmos-config role
+cosmos_user: cosmos
+cosmos_home: /opt/cosmos
+cosmos_tag: "6.4.2"
+cosmos_registry: docker.io
+cosmos_namespace: openc3inc

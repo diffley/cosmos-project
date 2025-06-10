@@ -8,15 +8,11 @@
       include_role:
         name: cosmos-requirements
 
-    - name: Create COSMOS user and directories
-      include_role:
-        name: cosmos-config
-        tasks_from: user_setup
-
     - name: Validate Docker installation
       command: docker --version
       register: docker_version
+      when: not (cosmos_skip_docker_install | default(false))
       
     - name: Display preparation status
       debug:
-        msg: "Host prepared for COSMOS. Docker version: {{ docker_version.stdout }}"
+        msg: "Host prepared for COSMOS. Docker version: {{ docker_version.stdout if docker_version is defined and docker_version.stdout is defined else 'Docker validation skipped' }}"

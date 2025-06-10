@@ -34,17 +34,15 @@
         mode: '0644'
       when: cosmos_airgap_ca_bundle is defined
 
-    - name: Load pre-bundled container images
-      shell: |
-        if [ -f {{ cosmos_home }}/cosmos-images.tar ]; then
-          docker load < {{ cosmos_home }}/cosmos-images.tar
-        fi
-      become_user: "{{ cosmos_user }}"
+    - name: Verify Nexus registry connectivity
+      uri:
+        url: "{{ cosmos_airgap_registry }}/v2/_catalog"
+        method: GET
+        status_code: 200
+      register: nexus_check
+      when: cosmos_airgap_registry is defined
 
-    - name: Verify container images are available
-      shell: docker images | grep cosmos
-      register: cosmos_images
-      
-    - name: Display available images
+    - name: Display registry status
       debug:
-        msg: "Available COSMOS images: {{ cosmos_images.stdout_lines }}"
+        msg: "Nexus registry accessible at {{ cosmos_airgap_registry }}"
+      when: nexus_check is defined and nexus_check.status == 200

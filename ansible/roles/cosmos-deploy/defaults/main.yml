@@ -1,0 +1,7 @@
+---
+# Default variables for cosmos-deploy role
+cosmos_user: cosmos
+cosmos_home: /opt/cosmos
+cosmos_deployment_method: git
+cosmos_build: true
+cosmos_deploy_cosmos: true

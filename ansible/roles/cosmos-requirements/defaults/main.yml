@@ -1,0 +1,5 @@
+---
+# Default variables for cosmos-requirements role
+cosmos_skip_docker_install: false
+cosmos_user: cosmos
+cosmos_home: /opt/cosmos

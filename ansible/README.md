@@ -7,10 +7,11 @@ Ansible playbooks and roles for deploying COSMOS/OpenC3 in organizational enviro
 
 ### 1. Prepare Secrets
 ```bash
-# Create vault file for secrets
-ansible-vault create group_vars/all/vault.yml
+# Create vault file for each environment  
+ansible-vault create inventories/dev/group_vars/all/vault.yml
+ansible-vault create inventories/prod/group_vars/all/vault.yml
 
-# Add required vault variables:
+# Add required vault variables to each:
 vault_cosmos_redis_username: openc3
 vault_cosmos_redis_password: your_secure_password
 vault_cosmos_bucket_username: openc3minio  
@@ -25,12 +26,12 @@ vault_cosmos_secret_key_base: your_64_character_secret_key
 
 ### 2. Deploy to Development
 ```bash
-ansible-playbook -i inventories/dev playbooks/cosmos-deploy.yml --ask-vault-pass
+ansible-playbook -i inventories/dev/hosts playbooks/cosmos-deploy.yml --ask-vault-pass
 ```
 
 ### 3. Deploy to Production
 ```bash
-ansible-playbook -i inventories/prod playbooks/cosmos-deploy.yml --ask-vault-pass
+ansible-playbook -i inventories/prod/hosts playbooks/cosmos-deploy.yml --ask-vault-pass
 ```
 
 ## Playbooks

@@ -2,6 +2,7 @@
 - name: Update package cache
   package:
     update_cache: yes
+  when: not (cosmos_skip_docker_install | default(false))
 
 - name: Install required packages
   package:
@@ -11,18 +12,14 @@
       - git
       - curl
     state: present
+  when: not (cosmos_skip_docker_install | default(false))
 
 - name: Start and enable Docker
   systemd:
     name: docker
     state: started
     enabled: yes
-
-- name: Add cosmos user to docker group
-  user:
-    name: "{{ cosmos_user }}"
-    groups: docker
-    append: yes
+  when: not (cosmos_skip_docker_install | default(false))
 
 - name: Create cosmos user
   user:
@@ -31,6 +28,14 @@
     shell: /bin/bash
     create_home: yes
     system: no
+  when: cosmos_user != ansible_user
+
+- name: Add cosmos user to docker group
+  user:
+    name: "{{ cosmos_user }}"
+    groups: docker
+    append: yes
+  when: not (cosmos_skip_docker_install | default(false)) and cosmos_user != ansible_user
 
 - name: Create cosmos directories
   file:

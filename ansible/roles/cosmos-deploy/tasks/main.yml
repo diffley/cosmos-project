@@ -6,6 +6,39 @@
     version: "{{ cosmos_version | default('main') }}"
     force: yes
   become_user: "{{ cosmos_user }}"
+  when: cosmos_deployment_method | default('git') == 'git'
+
+- name: Copy COSMOS source files (file-based deployment)
+  copy:
+    src: "{{ item }}"
+    dest: "{{ cosmos_home }}/"
+    owner: "{{ cosmos_user }}"
+    group: "{{ cosmos_user }}"
+    mode: preserve
+  with_fileglob:
+    - "/workspaces/cosmos-project/*"
+  when: cosmos_deployment_method | default('git') == 'file_copy'
+
+- name: Copy COSMOS directories (file-based deployment)
+  synchronize:
+    src: "/workspaces/cosmos-project/"
+    dest: "{{ cosmos_home }}/"
+    rsync_opts:
+      - "--exclude=.git"
+      - "--exclude=test-deployment"
+      - "--exclude=node_modules"
+      - "--exclude=*.log"
+    recursive: yes
+  delegate_to: localhost
+  when: cosmos_deployment_method | default('git') == 'file_copy'
+
+- name: Set ownership for copied files
+  file:
+    path: "{{ cosmos_home }}"
+    owner: "{{ cosmos_user }}"
+    group: "{{ cosmos_user }}"
+    recurse: yes
+  when: cosmos_deployment_method | default('git') == 'file_copy'
 
 - name: Make openc3.sh executable
   file:
@@ -18,19 +51,21 @@
     chdir: "{{ cosmos_home }}"
   become_user: "{{ cosmos_user }}"
   ignore_errors: yes
+  when: cosmos_deploy_cosmos | default(false)
 
 - name: Build COSMOS containers
   command: ./openc3.sh build
   args:
     chdir: "{{ cosmos_home }}"
   become_user: "{{ cosmos_user }}"
-  when: cosmos_build | default(true)
+  when: (cosmos_build | default(true)) and (cosmos_deploy_cosmos | default(false))
 
 - name: Deploy COSMOS
   command: "./openc3.sh run {{ cosmos_environment }}"
   args:
     chdir: "{{ cosmos_home }}"
   become_user: "{{ cosmos_user }}"
+  when: cosmos_deploy_cosmos | default(false)
 
 - name: Wait for COSMOS to start
   wait_for:
@@ -38,3 +73,4 @@
     host: "{{ ansible_default_ipv4.address }}"
     delay: 30
     timeout: 300
+  when: cosmos_deploy_cosmos | default(false)

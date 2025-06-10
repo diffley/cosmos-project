@@ -1,0 +1,5 @@
+[cosmos_servers]
+localhost ansible_connection=local cosmos_environment=dev
+
+[cosmos_servers:vars]
+ansible_user=codespace

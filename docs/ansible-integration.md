@@ -55,17 +55,27 @@ ansible/
 │   └── cosmos-destroy.yml     # Cleanup
 ├── roles/
 │   ├── cosmos-requirements/   # System dependencies
+│   │   ├── defaults/main.yml  # Default variables
+│   │   └── tasks/main.yml     # Role tasks
 │   ├── cosmos-config/         # Configuration management
-│   ├── cosmos-deploy/         # COSMOS deployment
-│   └── cosmos-plugins/        # Plugin management
-├── inventories/
-│   ├── dev/hosts
-│   ├── staging/hosts
-│   └── prod/hosts
-└── group_vars/
-    ├── all.yml               # Common variables
-    ├── dev.yml               # Dev environment
-    └── prod.yml              # Production environment
+│   │   ├── defaults/main.yml  # Default variables
+│   │   ├── tasks/main.yml     # Role tasks
+│   │   └── templates/         # Jinja2 templates
+│   └── cosmos-deploy/         # COSMOS deployment
+│       ├── defaults/main.yml  # Default variables
+│       └── tasks/main.yml     # Role tasks
+└── inventories/
+    ├── dev/
+    │   ├── hosts
+    │   └── group_vars/
+    │       ├── all/
+    │       │   ├── main.yml   # Common variables
+    │       │   └── vault.yml  # Encrypted secrets
+    │       └── cosmos_servers/
+    │           └── main.yml   # Dev-specific variables
+    ├── prod/ (same structure)
+    ├── airgap/ (same structure)
+    └── localhost/ (same structure)
 ```
 
 ### Workflow
@@ -95,13 +105,16 @@ group_vars/dev.yml → Jinja2 template → Target Host/.env.dev → openc3.sh
 ## Example Usage
 ```bash
 # Deploy to development
-ansible-playbook -i inventories/dev playbooks/cosmos-deploy.yml
+ansible-playbook -i inventories/dev/hosts playbooks/cosmos-deploy.yml
 
 # Deploy to production with vault
-ansible-playbook -i inventories/prod playbooks/cosmos-deploy.yml --ask-vault-pass
+ansible-playbook -i inventories/prod/hosts playbooks/cosmos-deploy.yml --ask-vault-pass
 
 # Cleanup environment
-ansible-playbook -i inventories/dev playbooks/cosmos-destroy.yml
+ansible-playbook -i inventories/dev/hosts playbooks/cosmos-destroy.yml
+
+# Air-gapped deployment
+ansible-playbook -i inventories/airgap/hosts playbooks/cosmos-deploy.yml
 ```
 
 ## Migration Path
