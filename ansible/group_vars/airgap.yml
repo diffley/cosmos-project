@@ -1,0 +1,27 @@
+---
+# Air-gapped environment specific variables
+
+cosmos_environment: airgap
+
+# Air-gapped infrastructure settings
+cosmos_airgap_registry: nexus.company.com
+cosmos_airgap_namespace: cosmos
+cosmos_airgap_apk_url: https://nexus.company.com/repository/alpine
+cosmos_airgap_rubygems_url: https://nexus.company.com/repository/rubygems
+cosmos_airgap_pypi_url: https://nexus.company.com/repository/pypi
+cosmos_airgap_npm_url: https://nexus.company.com/repository/npm
+
+# Security hardening for air-gapped environment
+cosmos_airgap_disable_demo: true
+cosmos_log_level: warning
+cosmos_enable_local_mode: false
+
+# Internal certificate bundle (uncomment if using internal CA)
+# cosmos_airgap_ca_bundle: /opt/cosmos/internal-ca-bundle.crt
+
+# Skip external health checks in air-gapped environment
+cosmos_skip_external_health_checks: true
+
+# Use file-based deployment instead of git clone
+cosmos_deployment_method: file_copy
+cosmos_source_path: /opt/cosmos-bundle

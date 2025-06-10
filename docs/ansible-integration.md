@@ -80,6 +80,18 @@ ansible/
 - **Secrets**: Ansible Vault replaces .env.secrets
 - **Orchestration**: Ansible coordinates multi-server deployments
 
+### Configuration Architecture
+**No Duplication Design:**
+```
+Local Development:
+Project Root/.env.dev → openc3.sh → Direct usage
+
+Ansible Deployment: 
+group_vars/dev.yml → Jinja2 template → Target Host/.env.dev → openc3.sh
+```
+
+**Key Insight:** Ansible generates .env files on target hosts from group_vars, then openc3.sh uses those generated files. Local and remote deployment use the same openc3.sh mechanisms but different configuration sources.
+
 ## Example Usage
 ```bash
 # Deploy to development
@@ -99,7 +111,86 @@ ansible-playbook -i inventories/dev playbooks/cosmos-destroy.yml
 4. Test deployment in development environment
 5. Gradually adopt for staging and production
 
+## Air-Gapped / Offline Deployment
+
+### Overview
+COSMOS is well-suited for air-gapped deployment due to its configurable external dependencies and container-based architecture.
+
+### External Dependencies
+**Container Registries**: All configurable via environment variables
+- `OPENC3_REGISTRY` (default: docker.io)
+- `OPENC3_ENTERPRISE_REGISTRY` (default: ghcr.io)
+
+**Package Repositories**: All configurable via environment variables
+- `APK_URL` (Alpine packages)
+- `RUBYGEMS_URL` (Ruby gems)
+- `PYPI_URL` (Python packages)
+- `NPM_URL` (Node.js packages)
+
+**Additional Dependencies**:
+- Git repositories (for Ansible deployment)
+- SSL/TLS certificates
+- Health check endpoints
+
+### Air-Gapped Implementation
+
+#### 1. Infrastructure Setup
+- **Container Registry**: Use Nexus, Harbor, or similar for internal container hosting
+- **Package Mirrors**: Mirror APK, RubyGems, PyPI, NPM repositories
+- **Certificate Management**: Provide internal CA bundle
+- **Git Repository**: Use internal Git server or file-based deployment
+
+#### 2. COSMOS Bundle Creation
+```bash
+# Create air-gapped bundle
+./scripts/bundle-for-airgap.sh 6.4.2
+
+# Transfers cosmos-airgap-6.4.2.tar.gz containing:
+# - COSMOS source code
+# - Pre-saved container images
+# - Deployment scripts
+```
+
+#### 3. Ansible Configuration
+**Environment Variables (group_vars/airgap.yml)**:
+```yaml
+cosmos_airgap_registry: nexus.company.com
+cosmos_airgap_namespace: cosmos
+cosmos_airgap_apk_url: https://nexus.company.com/repository/alpine
+cosmos_airgap_rubygems_url: https://nexus.company.com/repository/rubygems
+cosmos_airgap_pypi_url: https://nexus.company.com/repository/pypi
+cosmos_airgap_npm_url: https://nexus.company.com/repository/npm
+```
+
+**Template Generation**: Jinja2 templates automatically generate air-gapped .env files:
+```jinja2
+# templates/env.airgap.j2
+OPENC3_REGISTRY={{ cosmos_airgap_registry }}
+APK_URL={{ cosmos_airgap_apk_url }}
+# ... other overrides
+```
+
+#### 4. Deployment Workflow
+```bash
+# Prepare air-gapped environment
+ansible-playbook -i inventories/airgap playbooks/cosmos-airgap-prep.yml
+
+# Deploy COSMOS in air-gapped mode
+ansible-playbook -i inventories/airgap playbooks/cosmos-deploy.yml
+```
+
+### Key Benefits for Air-Gapped
+- **Built-in container bundling** via `openc3.sh util save/load`
+- **All external dependencies configurable** via environment variables
+- **No internet required at runtime** after proper preparation
+- **Ansible templates** automatically handle environment-specific configuration
+- **Security compliance** through internal infrastructure usage
+
+### Difficulty Assessment: **EASY** ⭐⭐☆☆☆
+Air-gapped deployment is straightforward due to COSMOS's configurable architecture and your existing Nexus container solution.
+
 ## Compatibility
 - **Existing workflows preserved**: Local development continues using openc3.sh
 - **No breaking changes**: Current Docker Compose setup remains functional
 - **Incremental adoption**: Can be implemented environment by environment
+- **Air-gapped ready**: Full offline deployment capability with proper preparation

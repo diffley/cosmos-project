@@ -1,0 +1,50 @@
+---
+- name: Prepare air-gapped environment for COSMOS
+  hosts: cosmos_servers
+  become: yes
+  vars:
+    cosmos_bundle_path: /tmp/cosmos-bundle.tar.gz
+
+  tasks:
+    - name: Install system requirements (offline packages)
+      include_role:
+        name: cosmos-requirements
+
+    - name: Copy COSMOS bundle to target host
+      copy:
+        src: "{{ cosmos_bundle_path }}"
+        dest: /tmp/cosmos-bundle.tar.gz
+      when: cosmos_deployment_method == "file_copy"
+
+    - name: Extract COSMOS bundle
+      unarchive:
+        src: /tmp/cosmos-bundle.tar.gz
+        dest: "{{ cosmos_home }}"
+        remote_src: yes
+        owner: "{{ cosmos_user }}"
+        group: "{{ cosmos_user }}"
+      when: cosmos_deployment_method == "file_copy"
+
+    - name: Copy internal CA certificate
+      copy:
+        src: "{{ cosmos_ca_bundle_source }}"
+        dest: "{{ cosmos_airgap_ca_bundle }}"
+        owner: "{{ cosmos_user }}"
+        group: "{{ cosmos_user }}"
+        mode: '0644'
+      when: cosmos_airgap_ca_bundle is defined
+
+    - name: Load pre-bundled container images
+      shell: |
+        if [ -f {{ cosmos_home }}/cosmos-images.tar ]; then
+          docker load < {{ cosmos_home }}/cosmos-images.tar
+        fi
+      become_user: "{{ cosmos_user }}"
+
+    - name: Verify container images are available
+      shell: docker images | grep cosmos
+      register: cosmos_images
+      
+    - name: Display available images
+      debug:
+        msg: "Available COSMOS images: {{ cosmos_images.stdout_lines }}"

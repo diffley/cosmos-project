@@ -1,20 +1,65 @@
 # OpenC3 COSMOS Project
 
-This git repo is used as a starting point for running and configuring OpenC3 COSMOS for your specific project.
-It includes the necessary scripts to run OpenC3 COSMOS, but does not come with all the source code and relies on
-running released containers rather than building containers from source. This is the recommended starting
-place for any project who wants to use OpenC3 COSMOS, but not develop the core system.
+Cloud-native command and control system with enhanced environment management and organizational deployment capabilities.
 
 ## Quick Start
 
-1. git clone https://github.com/openc3/cosmos-project.git cosmos-myprojectname
-2. Edit .env and change OPENC3_TAG to the specific version you would like to run (ie. OPENC3_TAG=5.3.0)
-   1. This will allow you to upgrade versions when you choose rather than following latest
-3. Start OpenC3 COSMOS
-   1. On Linux/Mac: ./openc3.sh run
-   2. On Windows: openc3.bat run
-4. After approximately 2 minutes, open a web browser to http://localhost:2900
-   1. If you run "docker ps", you can watch until the openc3-init container completes, at which point the system should be fully configured and ready to use.
+```bash
+# Clone and setup
+git clone https://github.com/openc3/cosmos-project.git cosmos-myprojectname
+cd cosmos-myprojectname
+
+# Create secrets file
+cp .env.secrets.example .env.secrets
+# Edit .env.secrets with your credentials
+
+# Start COSMOS
+./openc3.sh run          # Development environment
+./openc3.sh run prod     # Production environment
+
+# Access at http://localhost:2900 (after ~2 minutes)
+```
+
+## Environment Configuration
+
+**Hierarchical Loading:** `.env.defaults` → `.env.{env}` → `.env.local` → `.env.secrets`
+
+- **`.env.defaults`**: Base configuration (committed)
+- **`.env.dev`**: Development overrides (committed)  
+- **`.env.prod`**: Production overrides (committed)
+- **`.env.local`**: Personal overrides (gitignored)
+- **`.env.secrets`**: Sensitive data (gitignored)
+
+## Deployment Options
+
+### Local Development
+Direct usage for development and testing:
+```bash
+./openc3.sh run dev     # Start with development config
+./openc3.sh stop        # Stop services  
+./openc3.sh cleanup     # Remove data
+```
+
+### Organizational Deployment
+Ansible-based for production environments:
+```bash
+cd ansible
+ansible-playbook -i inventories/prod playbooks/cosmos-deploy.yml
+```
+
+### Air-Gapped Deployment
+For secure/offline environments:
+```bash
+# Create bundle
+./scripts/bundle-for-airgap.sh 6.4.2
+
+# Deploy in air-gapped environment
+ansible-playbook -i inventories/airgap playbooks/cosmos-deploy.yml
+```
+
+## Documentation
+- [Environment Management & Ansible Integration](docs/README.md)
+- [Detailed Configuration Guide](docs/ansible-integration.md)
 
 ## Run without the Demo project
 
