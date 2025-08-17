@@ -1,0 +1,106 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cosmos-redis
+  namespace: cosmos
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cosmos-redis
+  template:
+    metadata:
+      labels:
+        app: cosmos-redis
+    spec:
+      containers:
+      - name: redis
+        image: docker.io/openc3inc/openc3-redis:6.4.2
+        ports:
+        - containerPort: 6379
+        env:
+        - name: SSL_CERT_FILE
+          value: "/devel/cacert.pem"
+        envFrom:
+        - configMapRef:
+            name: cosmos-config
+        volumeMounts:
+        - name: redis-data
+          mountPath: /data
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+      volumes:
+      - name: redis-data
+        persistentVolumeClaim:
+          claimName: cosmos-redis-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: openc3-redis
+  namespace: cosmos
+spec:
+  selector:
+    app: cosmos-redis
+  ports:
+  - port: 6379
+    targetPort: 6379
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cosmos-redis-ephemeral
+  namespace: cosmos
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cosmos-redis-ephemeral
+  template:
+    metadata:
+      labels:
+        app: cosmos-redis-ephemeral
+    spec:
+      containers:
+      - name: redis-ephemeral
+        image: docker.io/openc3inc/openc3-redis:6.4.2
+        ports:
+        - containerPort: 6380
+        command: ["redis-server", "/config/redis_ephemeral.conf"]
+        env:
+        - name: SSL_CERT_FILE
+          value: "/devel/cacert.pem"
+        envFrom:
+        - configMapRef:
+            name: cosmos-config
+        volumeMounts:
+        - name: redis-ephemeral-data
+          mountPath: /data
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "125m"
+          limits:
+            memory: "512Mi"
+            cpu: "250m"
+      volumes:
+      - name: redis-ephemeral-data
+        persistentVolumeClaim:
+          claimName: cosmos-redis-ephemeral-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: openc3-redis-ephemeral
+  namespace: cosmos
+spec:
+  selector:
+    app: cosmos-redis-ephemeral
+  ports:
+  - port: 6380
+    targetPort: 6380

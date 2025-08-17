@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cosmos-operator
+  namespace: cosmos
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cosmos-operator
+  template:
+    metadata:
+      labels:
+        app: cosmos-operator
+    spec:
+      containers:
+      - name: operator
+        image: docker.io/openc3inc/openc3-operator:6.4.2
+        ports:
+        - containerPort: 7779
+        - containerPort: 8081
+          protocol: UDP
+        env:
+        - name: GEM_HOME
+          value: "/gems"
+        - name: PYTHONUSERBASE
+          value: "/gems/python_packages"
+        envFrom:
+        - configMapRef:
+            name: cosmos-config
+        volumeMounts:
+        - name: gems-volume
+          mountPath: /gems
+          readOnly: true
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "500m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+      volumes:
+      - name: gems-volume
+        persistentVolumeClaim:
+          claimName: cosmos-gems-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: openc3-operator
+  namespace: cosmos
+spec:
+  selector:
+    app: cosmos-operator
+  ports:
+  - name: tcp
+    port: 7779
+    targetPort: 7779
+  - name: udp
+    port: 8081
+    targetPort: 8081
+    protocol: UDP

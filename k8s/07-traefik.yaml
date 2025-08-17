@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cosmos-traefik
+  namespace: cosmos
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cosmos-traefik
+  template:
+    metadata:
+      labels:
+        app: cosmos-traefik
+    spec:
+      containers:
+      - name: traefik
+        image: docker.io/openc3inc/openc3-traefik:6.4.2
+        ports:
+        - containerPort: 2900
+        - containerPort: 2943
+        - containerPort: 8080
+        env:
+        - name: SSL_CERT_FILE
+          value: "/devel/cacert.pem"
+        envFrom:
+        - configMapRef:
+            name: cosmos-config
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "125m"
+          limits:
+            memory: "512Mi"
+            cpu: "250m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cosmos-traefik
+  namespace: cosmos
+spec:
+  selector:
+    app: cosmos-traefik
+  type: ClusterIP  # Change to LoadBalancer for external access
+  ports:
+  - name: http
+    port: 2900
+    targetPort: 2900
+  - name: https
+    port: 2943
+    targetPort: 2943
+  - name: dashboard
+    port: 8080
+    targetPort: 8080

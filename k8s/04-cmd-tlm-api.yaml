@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cosmos-cmd-tlm-api
+  namespace: cosmos
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cosmos-cmd-tlm-api
+  template:
+    metadata:
+      labels:
+        app: cosmos-cmd-tlm-api
+    spec:
+      containers:
+      - name: cmd-tlm-api
+        image: docker.io/openc3inc/openc3-cosmos-cmd-tlm-api:6.4.2
+        ports:
+        - containerPort: 2901
+        env:
+        - name: RAILS_ENV
+          value: "production"
+        - name: GEM_HOME
+          value: "/gems"
+        - name: PYTHONUSERBASE
+          value: "/gems/python_packages"
+        - name: ANYCABLE_REDIS_URL
+          value: "redis://$(OPENC3_REDIS_USERNAME):$(OPENC3_REDIS_PASSWORD)@openc3-redis:6379"
+        envFrom:
+        - configMapRef:
+            name: cosmos-config
+        volumeMounts:
+        - name: gems-volume
+          mountPath: /gems
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "500m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+      volumes:
+      - name: gems-volume
+        persistentVolumeClaim:
+          claimName: cosmos-gems-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: openc3-cosmos-cmd-tlm-api
+  namespace: cosmos
+spec:
+  selector:
+    app: cosmos-cmd-tlm-api
+  ports:
+  - port: 2901
+    targetPort: 2901
