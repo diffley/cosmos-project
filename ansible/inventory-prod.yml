@@ -1,0 +1,31 @@
+---
+# Production Environment Inventory
+all:
+  hosts:
+    prod-server:
+      ansible_host: 10.0.1.100  # Replace with actual prod server IP
+      ansible_user: deploy
+  vars:
+    # Production deployment
+    cosmos_user: cosmos
+    cosmos_home: /opt/cosmos
+    
+    # Git-based deployment with specific version
+    deployment_method: git
+    cosmos_repo: https://github.com/your-org/cosmos-project.git
+    cosmos_version: v1.0.0  # Use tags for production
+    
+    # COSMOS configuration
+    cosmos_tag: "6.4.2"
+    cosmos_local_mode: false
+    cosmos_demo: false  # No demo in production
+    cosmos_log_level: warn
+    
+    # Registry settings
+    cosmos_registry: docker.io
+    cosmos_namespace: openc3inc
+    
+    # Production-specific environment variables
+    cosmos_env_vars:
+      OPENC3_MAX_REPLICAS: "3"
+      OPENC3_BACKUP_ENABLED: "true"

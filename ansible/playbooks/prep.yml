@@ -1,0 +1,79 @@
+---
+# COSMOS Host Preparation Playbook
+# Installs Docker, creates users, sets up directories
+- name: Prepare COSMOS host environment
+  hosts: all
+  become: yes
+  
+  vars:
+    cosmos_user: "{{ cosmos_user | default('cosmos') }}"
+    cosmos_home: "{{ cosmos_home | default('/opt/cosmos') }}"
+    skip_docker_setup: "{{ skip_docker_setup | default(false) }}"
+
+  tasks:
+    - name: Update package cache
+      package:
+        update_cache: yes
+      when: not skip_docker_setup
+
+    - name: Install Docker (Ubuntu/Debian)
+      block:
+        - name: Add Docker GPG key
+          apt_key:
+            url: https://download.docker.com/linux/ubuntu/gpg
+            state: present
+
+        - name: Add Docker repository
+          apt_repository:
+            repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+            state: present
+
+        - name: Install Docker packages
+          apt:
+            name:
+              - docker-ce
+              - docker-ce-cli
+              - containerd.io
+              - docker-compose-plugin
+            state: present
+            update_cache: yes
+
+        - name: Start and enable Docker
+          systemd:
+            name: docker
+            state: started
+            enabled: yes
+      when: not skip_docker_setup and ansible_os_family == "Debian"
+      ignore_errors: yes
+
+    - name: Create cosmos user
+      user:
+        name: "{{ cosmos_user }}"
+        home: "{{ cosmos_home }}"
+        shell: /bin/bash
+        create_home: yes
+        system: no
+      when: cosmos_user != ansible_user
+
+    - name: Add cosmos user to docker group
+      user:
+        name: "{{ cosmos_user }}"
+        groups: docker
+        append: yes
+      when: cosmos_user != ansible_user and not skip_docker_setup
+
+    - name: Create cosmos directories
+      file:
+        path: "{{ item }}"
+        state: directory
+        owner: "{{ cosmos_user }}"
+        group: "{{ cosmos_user }}"
+        mode: '0755'
+      loop:
+        - "{{ cosmos_home }}"
+        - "{{ cosmos_home }}/logs"
+        - "{{ cosmos_home }}/data"
+
+    - name: Display preparation complete message
+      debug:
+        msg: "COSMOS host preparation complete. Docker setup: {{ 'skipped' if skip_docker_setup else 'installed' }}"

@@ -1,0 +1,26 @@
+---
+# Development Environment Inventory
+all:
+  hosts:
+    dev-server:
+      ansible_host: 192.168.1.100  # Replace with actual dev server IP
+      ansible_user: ubuntu
+  vars:
+    # Standard development deployment
+    cosmos_user: cosmos
+    cosmos_home: /opt/cosmos
+    
+    # Git-based deployment
+    deployment_method: git
+    cosmos_repo: https://github.com/your-org/cosmos-project.git
+    cosmos_version: main
+    
+    # COSMOS configuration
+    cosmos_tag: "6.4.2"
+    cosmos_local_mode: false
+    cosmos_demo: true
+    cosmos_log_level: info
+    
+    # Registry settings
+    cosmos_registry: docker.io
+    cosmos_namespace: openc3inc

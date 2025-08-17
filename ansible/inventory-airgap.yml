@@ -1,0 +1,34 @@
+---
+# Air-Gapped Environment Inventory
+all:
+  hosts:
+    airgap-server:
+      ansible_host: 192.168.10.100  # Replace with actual airgap server IP
+      ansible_user: deploy
+  vars:
+    # Air-gapped deployment
+    cosmos_user: cosmos
+    cosmos_home: /opt/cosmos
+    
+    # File-based deployment (no internet for git)
+    deployment_method: copy
+    cosmos_source_path: /tmp/cosmos-bundle  # From transferred bundle
+    
+    # COSMOS configuration
+    cosmos_tag: "6.4.2"
+    cosmos_local_mode: false
+    cosmos_demo: false
+    cosmos_log_level: info
+    
+    # Internal registry settings
+    cosmos_registry: nexus.company.com
+    cosmos_namespace: cosmos
+    cosmos_dependency_registry: nexus.company.com
+    cosmos_enterprise_registry: nexus.company.com
+    
+    # Air-gapped package repositories
+    cosmos_airgap_mode: true
+    cosmos_apk_url: https://nexus.company.com/repository/alpine
+    cosmos_rubygems_url: https://nexus.company.com/repository/rubygems
+    cosmos_pypi_url: https://nexus.company.com/repository/pypi
+    cosmos_npm_url: https://nexus.company.com/repository/npm
