@@ -13,6 +13,10 @@ spec:
       labels:
         app: cosmos-minio
     spec:
+      securityContext:
+        fsGroup: 1000
+        runAsUser: 1000
+        runAsGroup: 1000
       containers:
       - name: minio
         image: docker.io/openc3inc/openc3-minio:6.4.2
@@ -38,9 +42,17 @@ spec:
         envFrom:
         - configMapRef:
             name: cosmos-config
+        securityContext:
+          runAsUser: 1000
+          runAsGroup: 1000
+          allowPrivilegeEscalation: false
         volumeMounts:
         - name: minio-data
           mountPath: /data
+        - name: cacert
+          mountPath: /devel/cacert.pem
+          subPath: cacert.pem
+          readOnly: true
         resources:
           requests:
             memory: "512Mi"
@@ -52,6 +64,9 @@ spec:
       - name: minio-data
         persistentVolumeClaim:
           claimName: cosmos-bucket-pvc
+      - name: cacert
+        configMap:
+          name: cacert-config
 ---
 apiVersion: v1
 kind: Service

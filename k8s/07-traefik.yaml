@@ -26,6 +26,14 @@ spec:
         envFrom:
         - configMapRef:
             name: cosmos-config
+        volumeMounts:
+        - name: ssl-certs
+          mountPath: /etc/traefik/certs
+          readOnly: true
+        - name: traefik-ssl-config
+          mountPath: /etc/traefik/traefik.yaml
+          subPath: traefik-ssl.yaml
+          readOnly: true
         resources:
           requests:
             memory: "256Mi"
@@ -33,6 +41,13 @@ spec:
           limits:
             memory: "512Mi"
             cpu: "250m"
+      volumes:
+      - name: ssl-certs
+        secret:
+          secretName: traefik-ssl-certs
+      - name: traefik-ssl-config
+        configMap:
+          name: traefik-ssl-config
 ---
 apiVersion: v1
 kind: Service

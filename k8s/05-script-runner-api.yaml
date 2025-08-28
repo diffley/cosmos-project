@@ -13,6 +13,31 @@ spec:
       labels:
         app: cosmos-script-runner-api
     spec:
+      securityContext:
+        fsGroup: 1001
+        runAsUser: 1001
+        runAsGroup: 1001
+      initContainers:
+      - name: gems-init
+        image: docker.io/openc3inc/openc3-cosmos-init:6.4.2
+        env:
+        - name: GEM_HOME
+          value: "/gems"
+        - name: PYTHONUSERBASE
+          value: "/gems/python_packages"
+        envFrom:
+        - configMapRef:
+            name: cosmos-config
+        volumeMounts:
+        - name: gems-volume
+          mountPath: /gems
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
       containers:
       - name: script-runner-api
         image: docker.io/openc3inc/openc3-cosmos-script-runner-api:6.4.2
@@ -34,6 +59,12 @@ spec:
         - name: gems-volume
           mountPath: /gems
           readOnly: true
+        - name: plugins-volume
+          mountPath: /plugins
+        - name: cacert
+          mountPath: /devel/cacert.pem
+          subPath: cacert.pem
+          readOnly: true
         resources:
           requests:
             memory: "1Gi"
@@ -43,8 +74,12 @@ spec:
             cpu: "1000m"
       volumes:
       - name: gems-volume
-        persistentVolumeClaim:
-          claimName: cosmos-gems-pvc
+        emptyDir: {}
+      - name: plugins-volume
+        emptyDir: {}
+      - name: cacert
+        configMap:
+          name: cacert-config
 ---
 apiVersion: v1
 kind: Service

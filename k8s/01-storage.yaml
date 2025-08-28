@@ -34,14 +34,3 @@ spec:
     requests:
       storage: 50Gi
 ---
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: cosmos-gems-pvc
-  namespace: cosmos
-spec:
-  accessModes:
-    - ReadWriteMany
-  resources:
-    requests:
-      storage: 20Gi

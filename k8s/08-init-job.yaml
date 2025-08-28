@@ -30,6 +30,5 @@ spec:
             cpu: "500m"
       volumes:
       - name: gems-volume
-        persistentVolumeClaim:
-          claimName: cosmos-gems-pvc
+        emptyDir: {}
   backoffLimit: 3

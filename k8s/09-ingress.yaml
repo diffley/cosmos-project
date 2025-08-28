@@ -4,10 +4,10 @@ metadata:
   name: cosmos-ingress
   namespace: cosmos
   annotations:
-    kubernetes.io/ingress.class: "gce"
     kubernetes.io/ingress.global-static-ip-name: "cosmos-ip"
     kubernetes.io/ingress.allow-http: "true"
 spec:
+  ingressClassName: "gce"
   rules:
   - http:
       paths:

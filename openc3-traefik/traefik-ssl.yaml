@@ -3,8 +3,8 @@ tls:
   stores:
     default:
       defaultCertificate:
-        certFile: "/etc/traefik/cert.crt"
-        keyFile: "/etc/traefik/cert.key"
+        certFile: "/etc/traefik/certs/tls.crt"
+        keyFile: "/etc/traefik/certs/tls.key"
 entrypoints:
   web:
     address: ":2900"
