@@ -9,7 +9,7 @@ spec:
       restartPolicy: OnFailure
       containers:
       - name: init
-        image: docker.io/openc3inc/openc3-cosmos-init:6.4.2
+        image: docker.io/openc3inc/openc3-cosmos-init:6.7.0
         env:
         - name: GEM_HOME
           value: "/gems"

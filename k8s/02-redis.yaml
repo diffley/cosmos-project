@@ -19,11 +19,18 @@ spec:
         runAsGroup: 1001
       containers:
       - name: redis
-        image: docker.io/openc3inc/openc3-redis:6.4.2
+        image: docker.io/openc3inc/openc3-redis:6.7.0
+        command: ["redis-server", "/config/redis.conf"]
         ports:
         - containerPort: 6379
         env:
         - name: SSL_CERT_FILE
+          value: "/devel/cacert.pem"
+        - name: CURL_CA_BUNDLE
+          value: "/devel/cacert.pem"
+        - name: REQUESTS_CA_BUNDLE
+          value: "/devel/cacert.pem"
+        - name: NODE_EXTRA_CA_CERTS
           value: "/devel/cacert.pem"
         envFrom:
         - configMapRef:
@@ -34,6 +41,10 @@ spec:
         - name: redis-acl-config
           mountPath: /config/users.acl
           subPath: users.acl
+          readOnly: true
+        - name: cacert
+          mountPath: /devel/cacert.pem
+          subPath: cacert.pem
           readOnly: true
         resources:
           requests:
@@ -49,6 +60,9 @@ spec:
       - name: redis-acl-config
         configMap:
           name: redis-acl-config
+      - name: cacert
+        configMap:
+          name: cacert-config
 ---
 apiVersion: v1
 kind: Service
@@ -83,12 +97,18 @@ spec:
         runAsGroup: 1001
       containers:
       - name: redis-ephemeral
-        image: docker.io/openc3inc/openc3-redis:6.4.2
+        image: docker.io/openc3inc/openc3-redis:6.7.0
         ports:
         - containerPort: 6380
         command: ["redis-server", "/config/redis_ephemeral.conf"]
         env:
         - name: SSL_CERT_FILE
+          value: "/devel/cacert.pem"
+        - name: CURL_CA_BUNDLE
+          value: "/devel/cacert.pem"
+        - name: REQUESTS_CA_BUNDLE
+          value: "/devel/cacert.pem"
+        - name: NODE_EXTRA_CA_CERTS
           value: "/devel/cacert.pem"
         envFrom:
         - configMapRef:
@@ -99,6 +119,10 @@ spec:
         - name: redis-acl-config
           mountPath: /config/users.acl
           subPath: users.acl
+          readOnly: true
+        - name: cacert
+          mountPath: /devel/cacert.pem
+          subPath: cacert.pem
           readOnly: true
         resources:
           requests:
@@ -114,6 +138,9 @@ spec:
       - name: redis-acl-config
         configMap:
           name: redis-acl-config
+      - name: cacert
+        configMap:
+          name: cacert-config
 ---
 apiVersion: v1
 kind: Service

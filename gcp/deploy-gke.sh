@@ -24,6 +24,7 @@ show_help() {
     echo "  setup         - Configure GCP project, enable APIs, create cluster"
     echo "  deploy        - Deploy COSMOS to GKE cluster"
     echo "  all           - Run setup and deploy"
+    echo "  refresh       - Delete namespace and redeploy (clean start)"
     echo "  status        - Check cluster and service status"
     echo "  logs          - View COSMOS service logs"
     echo "  expose        - Create external LoadBalancer for web access"
@@ -206,6 +207,20 @@ do_deploy() {
         kubectl create configmap traefik-ssl-config --from-file=../openc3-traefik/traefik-ssl.yaml -n cosmos --dry-run=client -o yaml | kubectl apply -f -
     fi
 
+    # Create required ConfigMaps
+    echo "Creating COSMOS ConfigMaps..."
+    if [ -f cacert.pem ]; then
+        kubectl create configmap cacert-config --from-file=cacert.pem=cacert.pem -n cosmos --dry-run=client -o yaml | kubectl apply -f -
+        kubectl create configmap redis-acl-config --from-file=users.acl=openc3-redis/users.acl -n cosmos --dry-run=client -o yaml | kubectl apply -f -
+    elif [ -f ../cacert.pem ]; then
+        kubectl create configmap cacert-config --from-file=cacert.pem=../cacert.pem -n cosmos --dry-run=client -o yaml | kubectl apply -f -
+        kubectl create configmap redis-acl-config --from-file=users.acl=../openc3-redis/users.acl -n cosmos --dry-run=client -o yaml | kubectl apply -f -
+    else
+        echo -e "${RED}❌ cacert.pem not found${NC}"
+        exit 1
+    fi
+    echo -e "${GREEN}✓ COSMOS ConfigMaps created${NC}"
+
     # Apply Kubernetes manifests
     echo "Applying Kubernetes manifests..."
     if [ -d "k8s" ]; then
@@ -384,6 +399,30 @@ do_start() {
     do_status
 }
 
+# Refresh function - delete namespace and redeploy
+do_refresh() {
+    echo -e "${YELLOW}🔄 Refreshing COSMOS deployment...${NC}"
+    echo "===================================="
+    
+    # Ensure we have cluster access
+    gcloud container clusters get-credentials ${CLUSTER_NAME} --location=${ZONE}
+    
+    # Delete existing namespace
+    echo "Deleting existing namespace..."
+    kubectl delete namespace cosmos --ignore-not-found=true --wait=true
+    
+    echo "Waiting for namespace deletion to complete..."
+    while kubectl get namespace cosmos 2>/dev/null; do
+        echo -n "."
+        sleep 2
+    done
+    echo ""
+    echo -e "${GREEN}✓ Namespace deleted${NC}"
+    
+    # Run deploy with fresh start
+    do_deploy
+}
+
 # Cleanup function - remove GKE resources
 do_cleanup() {
     echo -e "${YELLOW}⚠️  Cleanup GKE Resources${NC}"
@@ -429,6 +468,10 @@ case "$MODE" in
         load_env
         do_setup "$2"
         do_deploy
+        ;;
+    refresh)
+        load_env
+        do_refresh
         ;;
     status)
         load_env

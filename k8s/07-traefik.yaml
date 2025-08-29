@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: traefik
-        image: docker.io/openc3inc/openc3-traefik:6.4.2
+        image: docker.io/openc3inc/openc3-traefik:6.7.0
         ports:
         - containerPort: 2900
         - containerPort: 2943
@@ -34,6 +34,10 @@ spec:
           mountPath: /etc/traefik/traefik.yaml
           subPath: traefik-ssl.yaml
           readOnly: true
+        - name: cacert
+          mountPath: /devel/cacert.pem
+          subPath: cacert.pem
+          readOnly: true
         resources:
           requests:
             memory: "256Mi"
@@ -48,6 +52,9 @@ spec:
       - name: traefik-ssl-config
         configMap:
           name: traefik-ssl-config
+      - name: cacert
+        configMap:
+          name: cacert-config
 ---
 apiVersion: v1
 kind: Service

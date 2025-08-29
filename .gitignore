@@ -47,4 +47,11 @@ yarn-error.log*
 # Ignore node modules
 node_modules
 
+# SSL certificates and keys
+*.crt
+*.key
+*.pem
+*.p12
+*.pfx
+
 typescript

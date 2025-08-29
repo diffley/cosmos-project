@@ -1,0 +1,22 @@
+# ConfigMaps for COSMOS - create before deploying other resources
+# Use: kubectl create configmap cacert-config --from-file=cacert.pem=../cacert.pem -n cosmos
+# Use: kubectl create configmap redis-acl-config --from-file=users.acl=../openc3-redis/users.acl -n cosmos
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cacert-config
+  namespace: cosmos
+data:
+  # Certificate bundle - replaced during deployment
+  cacert.pem: ""
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: redis-acl-config  
+  namespace: cosmos
+data:
+  # Redis ACL configuration - replaced during deployment
+  users.acl: ""
